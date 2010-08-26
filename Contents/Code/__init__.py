@@ -28,8 +28,8 @@ class localmedia(Agent.Movies):
     for p in os.listdir(path):
       pathFiles[p.lower()] = p
       pathFilesLower += [p]
-
     allFiles['posters'] = allFiles['posters'] + [fileroot, path.split('/')[-1]] #add the filename as a base, and the dirname as a base for poster lookups
+    allFiles['art'] = allFiles['art'] + [fileroot + '-fanart']
     
     #look for posters and art
     for t in ['posters','art']:
