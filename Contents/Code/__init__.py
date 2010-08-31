@@ -2,14 +2,14 @@
 import os
 
 artExt =   ['jpg','jpeg','png','tbn']
-allFiles = {'posters': ['poster','default','cover','movie'],
+allFiles = {'posters': ['poster','default','cover','movie','folder'],
             'art':     ['fanart']}
 
 class localmedia(Agent.Movies):
   name = 'Local Media Assets'
   languages = [Locale.Language.English]
   primary_provider = False
-  contributes_to = ['com.plexapp.agents.imdb']
+  contributes_to = ['com.plexapp.agents.imdb', 'com.plexapp.agents.thetvdb']
   
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(
@@ -27,7 +27,7 @@ class localmedia(Agent.Movies):
     pathFilesLower = []
     for p in os.listdir(path):
       pathFiles[p.lower()] = p
-      pathFilesLower += [p]
+      pathFilesLower += [p.lower()]
     allFiles['posters'] = allFiles['posters'] + [fileroot, path.split('/')[-1]] #add the filename as a base, and the dirname as a base for poster lookups
     allFiles['art'] = allFiles['art'] + [fileroot + '-fanart']
     
@@ -39,7 +39,11 @@ class localmedia(Agent.Movies):
           if f in pathFilesLower:
             data = Core.storage.load(os.path.join(path, pathFiles[f]))
             if t == 'posters':
-              if f not in metadata.posters: metadata.posters[f] = Proxy.Media(data)
+              if f not in metadata.posters: 
+                metadata.posters[f] = Proxy.Media(data)
+                Log('Local asset (type: ' + t + ') added: ' + f)
             elif t == 'art':
-              if f not in metadata.art: metadata.art[f] = Proxy.Media(data)
-            Log('local asset (type: ' + t + ') added: ' + f)
+              if f not in metadata.art: 
+                metadata.art[f] = Proxy.Media(data)
+                Log('Local asset (type: ' + t + ') added: ' + f)
+            
