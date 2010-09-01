@@ -9,7 +9,7 @@ class localmedia(Agent.Movies):
   name = 'Local Media Assets'
   languages = [Locale.Language.English]
   primary_provider = False
-  contributes_to = ['com.plexapp.agents.imdb', 'com.plexapp.agents.thetvdb']
+  contributes_to = ['com.plexapp.agents.imdb'] #, 'com.plexapp.agents.thetvdb'
   
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(
