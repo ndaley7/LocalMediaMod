@@ -17,8 +17,9 @@ class localmedia(Agent.Movies):
         score = 100    ))
     
   def update(self, metadata, media, lang):
-    passFiles = {}
-    filename = media.items[0].parts[0].file
+
+    filename = media.items[0].parts[0].file.decode('utf-8')
+    
     path = os.path.dirname(filename)
     if 'video_ts' == path.lower().split('/')[-1]:
       path = '/'.join(path.split('/')[:-1])
@@ -28,6 +29,7 @@ class localmedia(Agent.Movies):
     for p in os.listdir(path):
       pathFiles[p.lower()] = p
 
+    passFiles = {}
     passFiles['posters'] = allFiles['posters'] + [fileroot, path.split('/')[-1]] #add the filename as a base, and the dirname as a base for poster lookups
     passFiles['art'] = allFiles['art'] + [fileroot + '-fanart'] 
 
