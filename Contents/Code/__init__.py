@@ -60,8 +60,8 @@ class localMediaMovie(Agent.Movies):
     #look for subtitles
     for i in media.items:
       for p in i.parts:
-        filename = p.file.decode('utf-8').lower()
-        basename = os.path.basename(filename)
+        filename = p.file.decode('utf-8')
+        basename = os.path.basename(filename.lower())
         (fileroot, ext) = os.path.splitext(basename)
         for f in pathFiles:
           (froot, fext) = os.path.splitext(f)
@@ -129,8 +129,8 @@ class localMediaTV(Agent.TV_Shows):
       for e in media.seasons[s].episodes:
         for i in media.seasons[s].episodes[e].items:
           for part in i.parts:
-            filename = part.file.decode('utf-8').lower()
-            basename = os.path.basename(filename)
+            filename = part.file.decode('utf-8')
+            basename = os.path.basename(filename.lower())
             (fileroot, ext) = os.path.splitext(basename)
             path = os.path.dirname(filename)
             pathFiles = {}
