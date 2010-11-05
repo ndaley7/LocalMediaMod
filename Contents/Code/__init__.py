@@ -1,5 +1,5 @@
 #local media assets agent
-import os
+import os, string
 
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
@@ -65,16 +65,12 @@ class localMediaMovie(Agent.Movies):
         (fileroot, ext) = os.path.splitext(basename)
         for f in pathFiles:
           (froot, fext) = os.path.splitext(f)
-          if fext[1:] in subtitleExt: 
-            for lang in opensubtitleLanguages: 
-              if froot[-(len(lang)):] == lang.lower(): #does it have a language designator in the filename? 
-                froot = froot[:-(len(lang))-1] #remove the language from the filename for comparison purposes
-                break
-            if fileroot == froot:
-              #sample: media.items[0].parts[0].subtitles[Locale.Language.English][subtitle_name] = Proxy.LocalFile(file_path)
-              #if you can't figure out the language, use Locale.Language.Unknown
-              Log('found subtitle file: ' + f + ' language: ' + lang)
-              p.subtitles[Locale.Language.Unknown][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
+          if fext[1:] in subtitleExt:
+            langCheck =  string.translate(froot.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).split(' ')[-1].strip()
+            frootNoLang = froot[:-(len(langCheck))-1] #remove the language from the filename for comparison purposes
+            if (fileroot == froot) or (fileroot == frootNoLang):
+              Log('found subtitle file: ' + f + ' language: ' + langCheck)
+              p.subtitles[Locale.Language.Match(langCheck)][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
                 
 class localMediaTV(Agent.TV_Shows):
   name = 'Local Media Assets (TV)'
@@ -139,12 +135,10 @@ class localMediaTV(Agent.TV_Shows):
             for f in pathFiles:
               (froot, fext) = os.path.splitext(f)
               if fext[1:] in subtitleExt:
-                for lang in opensubtitleLanguages: 
-                  if froot[-(len(lang)):] == lang.lower(): #does it have a language designator in the filename? 
-                    froot = froot[:-(len(lang))-1] #remove the language from the filename for comparison purposes
-                    break
-                if fileroot == froot:
+                langCheck =  string.translate(froot.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).split(' ')[-1].strip()
+                frootNoLang = froot[:-(len(langCheck))-1] #remove the language from the filename for comparison purposes
+                if (fileroot == froot) or (fileroot == frootNoLang):
                   #sample: media.items[0].parts[0].subtitles[Locale.Language.English][subtitle_name] = Proxy.LocalFile(file_path)
                   #if you can't figure out the language, use Locale.Language.Unknown
-                  Log('found subtitle file: ' + f + ' language: ' + lang)
-                  part.subtitles[Locale.Language.Unknown][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
+                  Log('found subtitle file: ' + f + ' language: ' + langCheck)
+                  part.subtitles[Locale.Language.Match(langCheck)][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
