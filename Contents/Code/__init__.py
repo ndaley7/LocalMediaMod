@@ -6,11 +6,6 @@ artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}
             
 subtitleExt       = ['utf','utf8','utf-8','sub','srt','smi','rt','txt','ssa','aqt','jss','ass','idx']
-opensubtitleLanguages = ['Albanian','Arabic','Armenian','Bosnian','Bulgarian','Catalan','Chinese','Croatian','Czech','Danish','Dutch',
-                     'English','Esperanto','Estonian','Farsi','Finnish','French','Galician','Georgian','German','Greek','Hebrew','Hindi',
-                     'Hungarian','Icelandic','Indonesian','Italian','Japanese','Kazakh','Korean','Latvian','Lithuanian','Luxembourgish',
-                     'Macedonian','Malay','Norwegian','Occitan','Polish','Portuguese','Portuguese-BR','Romanian','Russian','Serbian','Slovak',
-                     'Slovenian','Spanish','Swedish','Syriac','Thai','Turkish','Ukrainian','Urdu','Vietnamese','Unknown']
 
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
@@ -69,7 +64,7 @@ class localMediaMovie(Agent.Movies):
             langCheck =  string.translate(froot.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).split(' ')[-1].strip()
             frootNoLang = froot[:-(len(langCheck))-1] #remove the language from the filename for comparison purposes
             if (fileroot == froot) or (fileroot == frootNoLang):
-              Log('found subtitle file: ' + f + ' language: ' + langCheck)
+              Log('found subtitle file: ' + f + ' language test: ' + langCheck)
               p.subtitles[Locale.Language.Match(langCheck)][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
                 
 class localMediaTV(Agent.TV_Shows):
@@ -138,7 +133,5 @@ class localMediaTV(Agent.TV_Shows):
                 langCheck =  string.translate(froot.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).split(' ')[-1].strip()
                 frootNoLang = froot[:-(len(langCheck))-1] #remove the language from the filename for comparison purposes
                 if (fileroot == froot) or (fileroot == frootNoLang):
-                  #sample: media.items[0].parts[0].subtitles[Locale.Language.English][subtitle_name] = Proxy.LocalFile(file_path)
-                  #if you can't figure out the language, use Locale.Language.Unknown
-                  Log('found subtitle file: ' + f + ' language: ' + langCheck)
+                  Log('found subtitle file: ' + f + ' language test: ' + langCheck)
                   part.subtitles[Locale.Language.Match(langCheck)][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
