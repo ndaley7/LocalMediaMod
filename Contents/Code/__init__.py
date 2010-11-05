@@ -38,7 +38,7 @@ class localMediaMovie(Agent.Movies):
       pathFiles[p.lower()] = p
 
     passFiles = {}
-    passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]] #add the filename as a base, and the dirname as a base for poster lookups
+    passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]] # add the filename as a base, and the dirname as a base for poster lookups
     passFiles['art'] = artFiles['art'] + [fileroot + '-fanart'] 
 
     #look for posters and art
@@ -88,49 +88,54 @@ class localMediaTV(Agent.TV_Shows):
         score = 100    ))
     
   def update(self, metadata, media, lang):
-
-    for s in media.seasons:
-      for e in media.seasons[s].episodes:
-        filename = media.seasons[s].episodes[e].items[0].parts[0].file.decode('utf-8')
-        Log(filename)
     
-    path = os.path.dirname(filename)
-    if 'video_ts' == path.lower().split('/')[-1]:
-      path = '/'.join(path.split('/')[:-1])
-    basename = os.path.basename(filename)
-    (fileroot, ext) = os.path.splitext(basename)
-    pathFiles = {}
-    for p in os.listdir(path):
-      pathFiles[p.lower()] = p
+    if False: #skip for now, needs plenty of work
+      for s in media.seasons:
+        for e in media.seasons[s].episodes:
+          filename = media.seasons[s].episodes[e].items[0].parts[0].file.decode('utf-8')
+          Log(filename)
+    
+          path = os.path.dirname(filename)
+          if 'video_ts' == path.lower().split('/')[-1]:
+            path = '/'.join(path.split('/')[:-1])
+          basename = os.path.basename(filename)
+          (fileroot, ext) = os.path.splitext(basename)
+          pathFiles = {}
+          for p in os.listdir(path):
+            pathFiles[p.lower()] = p
 
-    passFiles = {}
-    passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]] #add the filename as a base, and the dirname as a base for poster lookups
-    passFiles['art'] = artFiles['art'] + [fileroot + '-fanart'] 
+          passFiles = {}
+          passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]] #add the filename as a base, and the dirname as a base for poster lookups
+          passFiles['art'] = artFiles['art'] + [fileroot + '-fanart'] 
 
-    #look for posters and art
-    for t in ['posters','art']:
-      for e in artExt:
-        for a in passFiles[t]:
-          f = (a + '.' + e).lower()
-          if f in pathFiles.keys():
-            data = Core.storage.load(os.path.join(path, pathFiles[f]))
-            if t == 'posters':
-              if f not in metadata.posters:
-                metadata.posters[f] = Proxy.Media(data)
-                Log('Local asset (type: ' + t + ') added: ' + f)
-            elif t == 'art':
-              if f not in metadata.art:
-                metadata.art[f] = Proxy.Media(data)
-                Log('Local asset (type: ' + t + ') added: ' + f)
+          #look for posters and art
+          for t in ['posters','art']:
+            for e in artExt:
+              for a in passFiles[t]:
+                f = (a + '.' + e).lower()
+                if f in pathFiles.keys():
+                  data = Core.storage.load(os.path.join(path, pathFiles[f]))
+                  if t == 'posters':
+                    if f not in metadata.posters:
+                      metadata.posters[f] = Proxy.Media(data)
+                      Log('Local asset (type: ' + t + ') added: ' + f)
+                  elif t == 'art':
+                    if f not in metadata.art:
+                      metadata.art[f] = Proxy.Media(data)
+                      Log('Local asset (type: ' + t + ') added: ' + f)
     
     #look for subtitles
     for s in media.seasons:
       for e in media.seasons[s].episodes:
         for i in media.seasons[s].episodes[e].items:
-          for p in i.parts:
-            filename = p.file.decode('utf-8').lower()
+          for part in i.parts:
+            filename = part.file.decode('utf-8').lower()
             basename = os.path.basename(filename)
             (fileroot, ext) = os.path.splitext(basename)
+            path = os.path.dirname(filename)
+            pathFiles = {}
+            for p in os.listdir(path):
+              pathFiles[p.lower()] = p
             for f in pathFiles:
               (froot, fext) = os.path.splitext(f)
               if fext[1:] in subtitleExt:
@@ -142,4 +147,4 @@ class localMediaTV(Agent.TV_Shows):
                   #sample: media.items[0].parts[0].subtitles[Locale.Language.English][subtitle_name] = Proxy.LocalFile(file_path)
                   #if you can't figure out the language, use Locale.Language.Unknown
                   Log('found subtitle file: ' + f + ' language: ' + lang)
-                  p.subtitles[Locale.Language.Unknown][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
+                  part.subtitles[Locale.Language.Unknown][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
