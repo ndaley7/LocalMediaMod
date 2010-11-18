@@ -7,24 +7,36 @@ artFiles          = {'posters': ['poster','default','cover','movie','folder'],
             
 subtitleExt       = ['utf','utf8','utf-8','sub','srt','smi','rt','txt','ssa','aqt','jss','ass','idx']
 
+def cleanFilename(filename):
+  #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
+  return string.translate(filename.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).strip().lower()
+
 def FindSubtitles(part):
-  filename = part.file.decode('utf-8')
-  basename = os.path.basename(filename.lower())
+  filename = part.file.decode('utf-8') #full pathname
+  basename = os.path.basename(filename) #filename only (no path)
   (fileroot, ext) = os.path.splitext(basename)
-  path = os.path.dirname(filename)
+  fileroot = cleanFilename(fileroot)
+  ext = ext.lower()
+  path = os.path.dirname(filename) #get the path, without filename
+  
+  #TODO: grab any subtitles if there is only one media item (no matter how many parts in the current dir)
   
   # Get all the files in the path.
   pathFiles = {}
   for p in os.listdir(path):
-    pathFiles[p.lower()] = p
+    pathFiles[p] = p
   
   for f in pathFiles:
+    #Log('infile: ' + f)
     (froot, fext) = os.path.splitext(f)
-    if fext[1:] in subtitleExt:
-      langCheck =  string.translate(froot.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).split(' ')[-1].strip()
+    froot = cleanFilename(froot)
+    #Log('froot =' + froot)
+    
+    if fext[1:].lower() in subtitleExt:
+      langCheck = cleanFilename(froot).split(' ')[-1].strip()
       
       # Remove the language from the filename for comparison purposes.
-      frootNoLang = froot[:-(len(langCheck))-1] 
+      frootNoLang = froot[:-(len(langCheck))-1]
       
       if (fileroot == froot) or (fileroot == frootNoLang):
         Log('found subtitle file: ' + f + ' language test: ' + langCheck)
