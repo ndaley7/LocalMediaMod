@@ -18,9 +18,11 @@
 	<string>1.0</string>
 	<key>PlexFrameworkVersion</key>
 	<string>2</string>
-	<key>PlexPluginMode</key>
-	<string>AlwaysOn</string>
+	<key>PlexPluginClass</key>
+	<string>Agent</string>
 	<key>PlexPluginCodePolicy</key>
 	<string>Elevated</string>
+	<key>PlexPluginMode</key>
+	<string>AlwaysOn</string>
 </dict>
 </plist>
