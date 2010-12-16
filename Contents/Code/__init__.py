@@ -127,7 +127,11 @@ def getMetadataAtoms(part, metadata, type, episode=None):
     except: 
       pass
     try: 
-      summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/desc') #short description
+      try:
+        summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/ldes') #long description
+      except:
+        summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/desc') #short description
+        
       if type=='Movie': 
         metadata.summary = summary
       else: 
