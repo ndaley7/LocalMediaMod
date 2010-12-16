@@ -122,10 +122,11 @@ def parse_atoms(file, maxFileOffset):
     atoms = []
     while file.tell() < maxFileOffset:
         atom = parse_atom(file)
-        atoms.append(atom)
-        
-        if atom.size == 0:
+
+        if not atom or atom.size == 0:
           break
+
+        atoms.append(atom)
 
         # Seek to the end of the atom
         file.seek(atom.offset + atom.size, os.SEEK_SET)
@@ -200,8 +201,13 @@ class data(Atom):
             read32(self.file)
             data = self.file.read(self.size - 16)
             self._set_attr("data", data)
+        elif self.type == 22:
+            # uint8.
+            read32(self.file)
+            data = read8(self.file)
+            self._set_attr("data", data)
         else:
-            Log(self.type)
+            print "UNKNOWN TYPE", self.type
 
     def parse_string(self):
         # consume extra null?
