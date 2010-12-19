@@ -11,7 +11,7 @@ class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
   languages = [Locale.Language.English]
   primary_provider = False
-  contributes_to = ['com.plexapp.agents.imdb']
+  contributes_to = ['com.plexapp.agents.imdb', 'com.plexapp.agents.none']
   
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
@@ -55,13 +55,13 @@ class localMediaMovie(Agent.Movies):
       for part in i.parts:
         FindSubtitles(part)
      
-    getMetadataAtoms(part, metadata, type='TV')
+    getMetadataAtoms(part, metadata, type='Movie')
 
 class localMediaTV(Agent.TV_Shows):
   name = 'Local Media Assets (TV)'
   languages = [Locale.Language.English]
   primary_provider = False
-  contributes_to = ['com.plexapp.agents.thetvdb']
+  contributes_to = ['com.plexapp.agents.thetvdb', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
@@ -118,28 +118,25 @@ def getMetadataAtoms(part, metadata, type, episode=None):
     mp4fileTags = mp4file.Mp4File(filename)
     try: metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))     
     except: pass
-    try: 
+    try:
       title = find_data(mp4fileTags, 'moov/udta/meta/ilst/title') #Name
-      if type=='Movie': 
-        metadata.title = title
-      else: 
-        episode.title = title
+      if type == 'Movie': metadata.title = title
+      else: episode.title = title
     except: 
       pass
-    try: 
+      
+    try:
       try:
         summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/ldes') #long description
       except:
         summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/desc') #short description
         
-      if type=='Movie': 
-        metadata.summary = summary
-      else: 
-        episode.summary = summary
-    except: 
+      if type == 'Movie': metadata.summary = summary
+      else: episode.summary = summary
+    except:
       pass
 
-    if type=='Movie':
+    if type == 'Movie':
       try: 
         genres = find_data(mp4fileTags, 'moov/udta/meta/ilst/genre') #genre
         if len(genres) > 0:
@@ -162,8 +159,12 @@ def getMetadataAtoms(part, metadata, type, episode=None):
       try:
         releaseDate = find_data(mp4fileTags, 'moov/udta/meta/ilst/year')
         releaseDate = releaseDate.split('T')[0]
-        metadata.originally_available_at = Datetime.ParseDate(releaseDate).date() #release date
+        parsedDate = Datetime.ParseDate(releaseDate)
+        
+        metadata.year = parsedDate.year
+        metadata.originally_available_at = parsedDate.date() #release date
       except: 
+        print "blah"
         pass
      
 def find_data(atom, name):
