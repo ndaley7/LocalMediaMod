@@ -15,6 +15,12 @@ class EndOFFile(Exception):
     def __init_(self):
         Exception.__init__(self)
 
+def read64(file):
+    data = file.read(8)
+    if (data is None or len(data) <> 8):
+        raise EndOFFile()
+    return struct.unpack(">Q", data)[0]
+
 def read32(file):
     data = file.read(4)
     if (data is None or len(data) <> 4):
@@ -47,7 +53,8 @@ def parse_atom(file):
         size = read32(file)
         type = type_to_str(read32(file))
         if (size == 1):
-            size = read32(file)
+            size = read64(file)
+            
         return create_atom(size, type, offset, file)
     except EndOFFile:
         return None
