@@ -192,8 +192,10 @@ class meta(Atom):
 class data(Atom):
     def __init__(self, size, type, name, offset, file):
         Atom.__init__(self, size, type, name, offset, file)
+        
         # Mask off the version field
         self.type = read32(file) & 0xFFFFFF
+        
         data = None
         if self.type == 1:
             data = self.parse_string()
@@ -202,6 +204,13 @@ class data(Atom):
             # Another random null padding
             read32(self.file)
             data = read32(self.file)
+            
+            # If this looks big-endian, swap it; I would assume there's an 
+            # atom or something that indicates this, but I can't find it.
+            #
+            if (data & 0xff000000) != 0 and (data & 0xff) == 0:
+              data = (data & 0xff000000) >> 24
+
             self._set_attr("data", data)
         elif self.type == 13 or self.type == 14:
             # Another random null padding
