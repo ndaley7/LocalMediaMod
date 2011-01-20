@@ -9,7 +9,7 @@ subtitleExt       = ['utf','utf8','utf-8','sub','srt','smi','rt','txt','ssa','aq
 
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
-  languages = [Locale.Language.English]
+  languages = [Locale.Language.NoLanguage]
   primary_provider = False
   contributes_to = ['com.plexapp.agents.imdb', 'com.plexapp.agents.none']
   
@@ -35,6 +35,9 @@ class localMediaMovie(Agent.Movies):
     passFiles['art'] = artFiles['art'] + [fileroot + '-fanart'] 
 
     # Look for posters and art
+    valid_art = []
+    valid_posters = []
+    
     for t in ['posters','art']:
       for e in artExt:
         for a in passFiles[t]:
@@ -44,11 +47,16 @@ class localMediaMovie(Agent.Movies):
             if t == 'posters':
               if f not in metadata.posters:
                 metadata.posters[f] = Proxy.Media(data)
+                valid_posters.append(f)
                 Log('Local asset (type: ' + t + ') added: ' + f)
             elif t == 'art':
               if f not in metadata.art:
                 metadata.art[f] = Proxy.Media(data)
+                valid_art.append(f)
                 Log('Local asset (type: ' + t + ') added: ' + f)
+    
+    metadata.posters.validate_keys(valid_posters)
+    metadata.art.validate_keys(valid_art)
     
     # Look for subtitles
     for i in media.items:
@@ -59,7 +67,7 @@ class localMediaMovie(Agent.Movies):
 
 class localMediaTV(Agent.TV_Shows):
   name = 'Local Media Assets (TV)'
-  languages = [Locale.Language.English]
+  languages = [Locale.Language.NoLanguage]
   primary_provider = False
   contributes_to = ['com.plexapp.agents.thetvdb', 'com.plexapp.agents.none']
 
@@ -70,11 +78,43 @@ class localMediaTV(Agent.TV_Shows):
 
     # Look for subtitles for each episode.
     for s in media.seasons:
-      for e in media.seasons[s].episodes:
-        for i in media.seasons[s].episodes[e].items:
-          for part in i.parts:
-            FindSubtitles(part)
-            getMetadataAtoms(part, metadata, type='TV', episode=metadata.seasons[s].episodes[e])
+      # If we've got a date based season, ignore it for now, otherwise it'll collide with S/E folders/XML and PMS
+      # prefers date-based (why?)
+      #
+      if s < 1900:
+        for e in media.seasons[s].episodes:
+          for i in media.seasons[s].episodes[e].items:
+            for part in i.parts:
+              FindSubtitles(part)
+              getMetadataAtoms(part, metadata, type='TV', episode=metadata.seasons[s].episodes[e])
+      else:
+        # Whack it in case we wrote it.
+        del metadata.seasons[s]
+
+class localMediaArtist(Agent.Artist):
+  name = 'Local Media Assets (Artists)'
+  languages = [Locale.Language.NoLanguage]
+  primary_provider = False
+  contributes_to = ['com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+
+  def search(self, results, media, lang):
+    pass
+
+  def update(self, metadata, media, lang):
+    pass
+
+class localMediaAlbum(Agent.Album):
+  name = 'Local Media Assets (Albums)'
+  languages = [Locale.Language.NoLanguage]
+  primary_provider = False
+  contributes_to = ['com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+
+  def search(self, results, media, lang):
+    results.Append(MetadataSearchResult(id = 'null', score = 100))
+
+  def update(self, metadata, media, lang):
+    print metadata
+
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
@@ -107,22 +147,24 @@ def FindSubtitles(part):
       frootNoLang = froot[:-(len(langCheck))-1]
 
       if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
-        Log('Found subtitle file: ' + f + ' language test: ' + langCheck)
+        Log('Found subtitle file: ' + f + ' language: ' + langCheck)
         part.subtitles[Locale.Language.Match(langCheck)][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
 
 def getMetadataAtoms(part, metadata, type, episode=None):
   filename = part.file.decode('utf-8')
   file = os.path.basename(filename)
+  
   (file, ext) = os.path.splitext(file)
   if ext.lower() in ['.mp4', '.m4v', '.mov']:
     mp4fileTags = mp4file.Mp4File(filename)
-    try: metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))     
+    
+    try: metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))
     except: pass
     try:
       title = find_data(mp4fileTags, 'moov/udta/meta/ilst/title') #Name
       if type == 'Movie': metadata.title = title
       else: episode.title = title
-    except: 
+    except:
       pass
       
     try:
@@ -164,7 +206,6 @@ def getMetadataAtoms(part, metadata, type, episode=None):
         metadata.year = parsedDate.year
         metadata.originally_available_at = parsedDate.date() #release date
       except: 
-        print "blah"
         pass
      
 def find_data(atom, name):
