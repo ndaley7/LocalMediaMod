@@ -5,7 +5,7 @@ from mp4file import atomsearch, mp4file
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
-subtitleExt       = ['utf','utf8','utf-8','sub','srt','smi','rt','txt','ssa','aqt','jss','ass','idx']
+subtitleExt       = ['utf','utf8','utf-8','sub','srt','smi','rt','ssa','aqt','jss','ass','idx']
 
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
@@ -128,12 +128,17 @@ def FindSubtitles(part):
   ext = ext.lower()
   path = os.path.dirname(filename) #get the path, without filename
 
-  #TODO: grab any subtitles if there is only one media item (no matter how many parts in the current dir)
+  # TODO: grab any subtitles if there is only one media item (no matter how many parts in the current dir)
 
   # Get all the files in the path.
   pathFiles = {}
   for p in os.listdir(path):
     pathFiles[p] = p
+
+  # Start with the existing languages.
+  lang_sub_map = {}
+  for lang in part.subtitles.keys():
+    lang_sub_map[lang] = []
 
   addAll = False
   for f in pathFiles:
@@ -148,8 +153,17 @@ def FindSubtitles(part):
 
       if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
         Log('Found subtitle file: ' + f + ' language: ' + langCheck)
-        part.subtitles[Locale.Language.Match(langCheck)][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
-
+        lang = Locale.Language.Match(langCheck)
+        part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
+        
+        if not lang_sub_map.has_key(lang):
+          lang_sub_map[lang] = []
+        lang_sub_map[lang].append(f)
+  
+  # Now whack subtitles that don't exist anymore.
+  for lang in lang_sub_map.keys():
+    part.subtitles[lang].validate_keys(lang_sub_map[lang])
+  
 def getMetadataAtoms(part, metadata, type, episode=None):
   filename = part.file.decode('utf-8')
   file = os.path.basename(filename)
