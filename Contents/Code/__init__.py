@@ -75,13 +75,12 @@ class localMediaTV(Agent.TV_Shows):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
-
     # Look for subtitles for each episode.
     for s in media.seasons:
       # If we've got a date based season, ignore it for now, otherwise it'll collide with S/E folders/XML and PMS
       # prefers date-based (why?)
       #
-      if s < 1900:
+      if int(s) < 1900:
         for e in media.seasons[s].episodes:
           for i in media.seasons[s].episodes[e].items:
             for part in i.parts:
