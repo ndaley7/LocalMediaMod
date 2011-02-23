@@ -127,8 +127,6 @@ def FindSubtitles(part):
   ext = ext.lower()
   path = os.path.dirname(filename) #get the path, without filename
 
-  # TODO: grab any subtitles if there is only one media item (no matter how many parts in the current dir)
-
   # Get all the files in the path.
   pathFiles = {}
   for p in os.listdir(path):
@@ -144,7 +142,7 @@ def FindSubtitles(part):
     (froot, fext) = os.path.splitext(f)
     froot = cleanFilename(froot)
 
-    if fext[1:].lower() in subtitleExt:
+    if f[0] != '.' and fext[1:].lower() in subtitleExt:
       langCheck = cleanFilename(froot).split(' ')[-1].strip()
 
       # Remove the language from the filename for comparison purposes.
