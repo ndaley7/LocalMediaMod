@@ -146,7 +146,7 @@ def FindSubtitles(part):
       langCheck = cleanFilename(froot).split(' ')[-1].strip()
 
       # Remove the language from the filename for comparison purposes.
-      frootNoLang = froot[:-(len(langCheck))-1]
+      frootNoLang = froot[:-(len(langCheck))-1].strip()
 
       if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
         Log('Found subtitle file: ' + f + ' language: ' + langCheck)
