@@ -112,7 +112,7 @@ class localMediaAlbum(Agent.Album):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
-    print metadata
+    pass
 
             
 def cleanFilename(filename):
