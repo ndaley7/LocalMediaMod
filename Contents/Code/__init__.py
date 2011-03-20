@@ -1,6 +1,7 @@
 #local media assets agent
 import os, string
 from mp4file import atomsearch, mp4file
+from mutagen.id3 import ID3
 
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
@@ -94,26 +95,58 @@ class localMediaArtist(Agent.Artist):
   name = 'Local Media Assets (Artists)'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
-  contributes_to = ['com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
-    pass
+    Log('artist search')
+    results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
-    pass
+    Log('artist update')
 
 class localMediaAlbum(Agent.Album):
   name = 'Local Media Assets (Albums)'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
-  contributes_to = ['com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
+    Log('album search')
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
-    pass
-
+    for t in media.tracks:
+      for i in media.tracks[t].items:
+        for p in i.parts:
+          f = ID3(p.file.decode('utf-8'))
+          i=0
+          #valid_posters = []
+          for frame in f.getall("APIC"):
+            i+=1
+            if (frame.mime == "image/jpeg") or (frame.mime == "image/jpg"): ext = "jpg"
+            if frame.mime == "image/png": ext = "png"
+            if frame.mime == "image/gif": ext = "gif"
+            posterName = 'APIC_' + str(i)
+            if posterName not in metadata.posters:
+              Log('adding embedded APIC')
+              metadata.posters[posterName] = Proxy.Media(frame.data, ext=ext)
+              #valid_posters.append(posterName)
+    
+          #metadata.posters.validate_keys(valid_posters)
+      
+      #Log(frame.pprint().encode(enc, 'replace'))
+      #ext = ".img"
+      #if (frame.mime == "image/jpeg") or (frame.mime == "image/jpg"): ext = ".jpg"
+      #if frame.mime == "image/png": ext = ".png"
+      #if frame.mime == "image/gif": ext = ".gif"
+      #(proot,pext) = os.path.splitext(filename)
+      #imgfilename = proot + ext
+      #if os.path.exists(imgfilename) : print "File " + imgfilename + " exists. Skipping!"
+      #else:
+      #  print "Writing image to " + imgfilename + " !"
+      #  myfile = file(imgfilename, 'wb')
+      #  myfile.write(frame.data)
+    Log('album update')
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
