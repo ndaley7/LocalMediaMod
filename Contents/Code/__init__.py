@@ -91,19 +91,6 @@ class localMediaTV(Agent.TV_Shows):
         # Whack it in case we wrote it.
         del metadata.seasons[s]
 
-class localMediaArtist(Agent.Artist):
-  name = 'Local Media Assets (Artists)'
-  languages = [Locale.Language.NoLanguage]
-  primary_provider = False
-  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
-
-  def search(self, results, media, lang):
-    Log('artist search')
-    results.Append(MetadataSearchResult(id = 'null', score = 100))
-
-  def update(self, metadata, media, lang):
-    Log('artist update')
-
 class localMediaAlbum(Agent.Album):
   name = 'Local Media Assets (Albums)'
   languages = [Locale.Language.NoLanguage]
@@ -111,42 +98,36 @@ class localMediaAlbum(Agent.Album):
   contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
-    Log('album search')
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
     for t in media.tracks:
       for i in media.tracks[t].items:
         for p in i.parts:
-          f = ID3(p.file.decode('utf-8'))
-          i=0
-          #valid_posters = []
-          for frame in f.getall("APIC"):
-            i+=1
-            if (frame.mime == "image/jpeg") or (frame.mime == "image/jpg"): ext = "jpg"
-            if frame.mime == "image/png": ext = "png"
-            if frame.mime == "image/gif": ext = "gif"
-            posterName = 'APIC_' + str(i)
-            if posterName not in metadata.posters:
-              Log('adding embedded APIC')
-              metadata.posters[posterName] = Proxy.Media(frame.data, ext=ext)
-              #valid_posters.append(posterName)
-    
+          filename = p.file.decode('utf-8')
+          (fileroot, fext) = os.path.splitext(filename)
+          if fext.lower() == '.mp3':
+            f = ID3(filename)
+            i=0
+            #valid_posters = []
+            for frame in f.getall("APIC"):
+              i+=1
+              if (frame.mime == 'image/jpeg') or (frame.mime == 'image/jpg'): ext = 'jpg'
+              elif frame.mime == 'image/png': ext = 'png'
+              elif frame.mime == 'image/gif': ext = 'gif'
+              else: ext = '' 
+              posterName = 'APIC_' + str(i)
+              if posterName not in metadata.posters:
+                Log('Adding embedded APIC art from mp3 file.')
+                metadata.posters[posterName] = Proxy.Media(frame.data, ext=ext)
+          elif fext.lower() in ['.mp4','.m4a']:
+            mp4fileTags = mp4file.Mp4File(filename)
+            try: 
+              metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))
+              Log('Adding embedded coverart from m4a/mp4 file.')
+            except: pass
+          #valid_posters.append(posterName)
           #metadata.posters.validate_keys(valid_posters)
-      
-      #Log(frame.pprint().encode(enc, 'replace'))
-      #ext = ".img"
-      #if (frame.mime == "image/jpeg") or (frame.mime == "image/jpg"): ext = ".jpg"
-      #if frame.mime == "image/png": ext = ".png"
-      #if frame.mime == "image/gif": ext = ".gif"
-      #(proot,pext) = os.path.splitext(filename)
-      #imgfilename = proot + ext
-      #if os.path.exists(imgfilename) : print "File " + imgfilename + " exists. Skipping!"
-      #else:
-      #  print "Writing image to " + imgfilename + " !"
-      #  myfile = file(imgfilename, 'wb')
-      #  myfile.write(frame.data)
-    Log('album update')
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
