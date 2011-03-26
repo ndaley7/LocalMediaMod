@@ -55,15 +55,12 @@ class localMediaMovie(Agent.Movies):
                 metadata.art[f] = Proxy.Media(data)
                 valid_art.append(f)
                 Log('Local asset (type: ' + t + ') added: ' + f)
-    
     metadata.posters.validate_keys(valid_posters)
     metadata.art.validate_keys(valid_art)
-    
     # Look for subtitles
     for i in media.items:
       for part in i.parts:
         FindSubtitles(part)
-     
     getMetadataAtoms(part, metadata, type='Movie')
 
 class localMediaTV(Agent.TV_Shows):
@@ -71,16 +68,13 @@ class localMediaTV(Agent.TV_Shows):
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
   contributes_to = ['com.plexapp.agents.thetvdb', 'com.plexapp.agents.none']
-
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
-
   def update(self, metadata, media, lang):
     # Look for subtitles for each episode.
     for s in media.seasons:
       # If we've got a date based season, ignore it for now, otherwise it'll collide with S/E folders/XML and PMS
       # prefers date-based (why?)
-      #
       if int(s) < 1900:
         for e in media.seasons[s].episodes:
           for i in media.seasons[s].episodes[e].items:
@@ -104,12 +98,30 @@ class localMediaAlbum(Agent.Album):
     for t in media.tracks:
       for i in media.tracks[t].items:
         for p in i.parts:
+          valid_posters = []
           filename = p.file.decode('utf-8')
+          path = os.path.dirname(filename)
           (fileroot, fext) = os.path.splitext(filename)
+          pathFiles = {}
+          for pth in os.listdir(path):
+            pathFiles[pth.lower()] = pth
+          # Add the filename as a base, and the dirname as a base for poster lookups
+          passFiles = {}
+          passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]]
+          # Look for posters
+          for e in artExt:
+            for a in passFiles['posters']:
+              f = (a + '.' + e).lower()
+              if f in pathFiles.keys():
+                data = Core.storage.load(os.path.join(path, pathFiles[f]))
+                if f not in metadata.posters:
+                  metadata.posters[f] = Proxy.Media(data)
+                  valid_posters.append(f)
+                  Log('Local asset image added: ' + f + ', for file: ' + filename)
+          # Look for embedded id3 APIC images in mp3 files
           if fext.lower() == '.mp3':
             f = ID3(filename)
             i=0
-            #valid_posters = []
             for frame in f.getall("APIC"):
               i+=1
               if (frame.mime == 'image/jpeg') or (frame.mime == 'image/jpg'): ext = 'jpg'
@@ -120,14 +132,16 @@ class localMediaAlbum(Agent.Album):
               if posterName not in metadata.posters:
                 Log('Adding embedded APIC art from mp3 file.')
                 metadata.posters[posterName] = Proxy.Media(frame.data, ext=ext)
+                valid_posters.append(posterName)
+          # Look for coverart atoms in mp4/m4a
           elif fext.lower() in ['.mp4','.m4a']:
             mp4fileTags = mp4file.Mp4File(filename)
-            try: 
+            try:
               metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))
+              valid_posters.append('atom_coverart')
               Log('Adding embedded coverart from m4a/mp4 file.')
             except: pass
-          #valid_posters.append(posterName)
-          #metadata.posters.validate_keys(valid_posters)
+          metadata.posters.validate_keys(valid_posters)
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
