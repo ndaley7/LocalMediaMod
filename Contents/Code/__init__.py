@@ -2,6 +2,7 @@
 import os, string, hashlib
 from mp4file import atomsearch, mp4file
 from mutagen.id3 import ID3
+from mutagen.flac import FLAC
 
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
@@ -147,6 +148,17 @@ class localMediaAlbum(Agent.Album):
                 valid_posters.append(posterName)
                 Log('Adding embedded coverart from m4a/mp4 file: ' + filename)
             except: pass
+          # Look for coverart atoms in flac files
+          elif fext.lower() == '.flac':
+            f = FLAC(filename)
+            for p in f.pictures:
+              posterName = hashlib.md5(p.data).hexdigest()
+              if posterName not in metadata.posters:
+                Log('Adding embedded art from FLAC file: ' + filename)
+                metadata.posters[posterName] = Proxy.Media(p.data)
+                valid_posters.append(posterName)
+              else:
+                Log('skipping already added FLAC art')
     metadata.posters.validate_keys(valid_posters)
             
 def cleanFilename(filename):
