@@ -1,5 +1,5 @@
 #local media assets agent
-import os, string
+import os, string, hashlib
 from mp4file import atomsearch, mp4file
 from mutagen.id3 import ID3
 
@@ -114,34 +114,40 @@ class localMediaAlbum(Agent.Album):
               f = (a + '.' + e).lower()
               if f in pathFiles.keys():
                 data = Core.storage.load(os.path.join(path, pathFiles[f]))
-                if f not in metadata.posters:
-                  metadata.posters[f] = Proxy.Media(data)
-                  valid_posters.append(f)
+                posterName = hashlib.md5(data).hexdigest()
+                if posterName not in metadata.posters:
+                  metadata.posters[posterName] = Proxy.Media(data)
+                  valid_posters.append(posterName)
                   Log('Local asset image added: ' + f + ', for file: ' + filename)
+                else:
+                  Log('skipping add for local art')
           # Look for embedded id3 APIC images in mp3 files
           if fext.lower() == '.mp3':
             f = ID3(filename)
-            i=0
             for frame in f.getall("APIC"):
-              i+=1
               if (frame.mime == 'image/jpeg') or (frame.mime == 'image/jpg'): ext = 'jpg'
               elif frame.mime == 'image/png': ext = 'png'
               elif frame.mime == 'image/gif': ext = 'gif'
-              else: ext = '' 
-              posterName = 'APIC_' + str(i)
+              else: ext = ''
+              posterName = hashlib.md5(frame.data).hexdigest()
               if posterName not in metadata.posters:
-                Log('Adding embedded APIC art from mp3 file.')
+                Log('Adding embedded APIC art from mp3 file: ' + filename)
                 metadata.posters[posterName] = Proxy.Media(frame.data, ext=ext)
                 valid_posters.append(posterName)
+              else:
+                Log('skipping already added APIC')
           # Look for coverart atoms in mp4/m4a
           elif fext.lower() in ['.mp4','.m4a']:
             mp4fileTags = mp4file.Mp4File(filename)
             try:
-              metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))
-              valid_posters.append('atom_coverart')
-              Log('Adding embedded coverart from m4a/mp4 file.')
+              data = find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart')
+              posterName = hashlib.md5(data).hexdigest()
+              if posterName not in metadata.posters:
+                metadata.posters['atom_coverart'] = Proxy.Media(data)
+                valid_posters.append(posterName)
+                Log('Adding embedded coverart from m4a/mp4 file: ' + filename)
             except: pass
-          metadata.posters.validate_keys(valid_posters)
+          #metadata.posters.validate_keys(valid_posters)
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
