@@ -95,10 +95,10 @@ class localMediaAlbum(Agent.Album):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
+    valid_posters = []
     for t in media.tracks:
       for i in media.tracks[t].items:
         for p in i.parts:
-          valid_posters = []
           filename = p.file.decode('utf-8')
           path = os.path.dirname(filename)
           (fileroot, fext) = os.path.splitext(filename)
@@ -147,7 +147,7 @@ class localMediaAlbum(Agent.Album):
                 valid_posters.append(posterName)
                 Log('Adding embedded coverart from m4a/mp4 file: ' + filename)
             except: pass
-          #metadata.posters.validate_keys(valid_posters)
+    metadata.posters.validate_keys(valid_posters)
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
