@@ -1,8 +1,10 @@
 #local media assets agent
-import os, string, hashlib
+import os, string, hashlib, base64
 from mp4file import atomsearch, mp4file
 from mutagen.id3 import ID3
 from mutagen.flac import FLAC
+from mutagen.flac import Picture
+from mutagen.oggvorbis import OggVorbis
 
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
@@ -159,6 +161,25 @@ class localMediaAlbum(Agent.Album):
                 valid_posters.append(posterName)
               else:
                 Log('skipping already added FLAC art')
+          # Look for coverart atoms in ogg files
+          elif fext.lower() == '.ogg':
+            try:
+            f = OggVorbis(filename)
+            if f.has_key('metadata_block_picture'):
+              for pic in f['metadata_block_picture']:
+                p = Picture(base64.standard_b64decode(pic))
+                if (p.mime == 'image/jpeg') or (p.mime == 'image/jpg'): ext = 'jpg'
+                elif p.mime == 'image/png': ext = 'png'
+                elif p.mime == 'image/gif': ext = 'gif'
+                else: ext = ''
+                posterName = hashlib.md5(p.data).hexdigest()
+                if posterName not in metadata.posters:
+                  Log('Adding embedded art from FLAC file: ' + filename)
+                  metadata.posters[posterName] = Proxy.Media(p.data, ext=ext)
+                  valid_posters.append(posterName)
+                else:
+                  Log('skipping already added ogg art')
+            except: pass            
     metadata.posters.validate_keys(valid_posters)
             
 def cleanFilename(filename):
