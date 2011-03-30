@@ -164,21 +164,21 @@ class localMediaAlbum(Agent.Album):
           # Look for coverart atoms in ogg files
           elif fext.lower() == '.ogg':
             try:
-            f = OggVorbis(filename)
-            if f.has_key('metadata_block_picture'):
-              for pic in f['metadata_block_picture']:
-                p = Picture(base64.standard_b64decode(pic))
-                if (p.mime == 'image/jpeg') or (p.mime == 'image/jpg'): ext = 'jpg'
-                elif p.mime == 'image/png': ext = 'png'
-                elif p.mime == 'image/gif': ext = 'gif'
-                else: ext = ''
-                posterName = hashlib.md5(p.data).hexdigest()
-                if posterName not in metadata.posters:
-                  Log('Adding embedded art from FLAC file: ' + filename)
-                  metadata.posters[posterName] = Proxy.Media(p.data, ext=ext)
-                  valid_posters.append(posterName)
-                else:
-                  Log('skipping already added ogg art')
+              f = OggVorbis(filename)
+              if f.has_key('metadata_block_picture'):
+                for pic in f['metadata_block_picture']:
+                  p = Picture(base64.standard_b64decode(pic))
+                  if (p.mime == 'image/jpeg') or (p.mime == 'image/jpg'): ext = 'jpg'
+                  elif p.mime == 'image/png': ext = 'png'
+                  elif p.mime == 'image/gif': ext = 'gif'
+                  else: ext = ''
+                  posterName = hashlib.md5(p.data).hexdigest()
+                  if posterName not in metadata.posters:
+                    Log('Adding embedded art from FLAC file: ' + filename)
+                    metadata.posters[posterName] = Proxy.Media(p.data, ext=ext)
+                    valid_posters.append(posterName)
+                  else:
+                    Log('skipping already added ogg art')
             except: pass            
     metadata.posters.validate_keys(valid_posters)
             
