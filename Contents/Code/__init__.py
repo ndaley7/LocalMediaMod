@@ -21,9 +21,7 @@ class localMediaMovie(Agent.Movies):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
     
   def update(self, metadata, media, lang):
-
-    filename = media.items[0].parts[0].file.decode('utf-8')
-    
+    filename = media.items[0].parts[0].file.decode('utf-8')   
     path = os.path.dirname(filename)
     if 'video_ts' == path.lower().split('/')[-1]:
       path = '/'.join(path.split('/')[:-1])
@@ -32,16 +30,13 @@ class localMediaMovie(Agent.Movies):
     pathFiles = {}
     for p in os.listdir(path):
       pathFiles[p.lower()] = p
-
     # Add the filename as a base, and the dirname as a base for poster lookups
     passFiles = {}
     passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]] 
     passFiles['art'] = artFiles['art'] + [fileroot + '-fanart'] 
-
     # Look for posters and art
     valid_art = []
-    valid_posters = []
-    
+    valid_posters = []  
     for t in ['posters','art']:
       for e in artExt:
         for a in passFiles[t]:
@@ -96,6 +91,7 @@ class localMediaAlbum(Agent.Album):
 
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
+    return
 
   def update(self, metadata, media, lang):
     valid_posters = []
@@ -140,7 +136,7 @@ class localMediaAlbum(Agent.Album):
               else:
                 Log('skipping already added APIC')
           # Look for coverart atoms in mp4/m4a
-          elif fext.lower() in ['.mp4','.m4a']:
+          elif fext.lower() in ['.mp4','.m4a','.m4p']:
             mp4fileTags = mp4file.Mp4File(filename)
             try:
               data = find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart')
@@ -179,8 +175,8 @@ class localMediaAlbum(Agent.Album):
                     valid_posters.append(posterName)
                   else:
                     Log('skipping already added ogg art')
-            except: pass            
-    metadata.posters.validate_keys(valid_posters)
+            except: pass        
+    #metadata.posters.validate_keys(valid_posters)
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
@@ -193,28 +189,22 @@ def FindSubtitles(part):
   fileroot = cleanFilename(fileroot) 
   ext = ext.lower()
   path = os.path.dirname(filename) #get the path, without filename
-
   # Get all the files in the path.
   pathFiles = {}
   for p in os.listdir(path):
     pathFiles[p] = p
-
   # Start with the existing languages.
   lang_sub_map = {}
   for lang in part.subtitles.keys():
     lang_sub_map[lang] = []
-
   addAll = False
   for f in pathFiles:
     (froot, fext) = os.path.splitext(f)
     froot = cleanFilename(froot)
-
     if f[0] != '.' and fext[1:].lower() in subtitleExt:
       langCheck = cleanFilename(froot).split(' ')[-1].strip()
-
       # Remove the language from the filename for comparison purposes.
       frootNoLang = froot[:-(len(langCheck))-1].strip()
-
       if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
         Log('Found subtitle file: ' + f + ' language: ' + langCheck)
         lang = Locale.Language.Match(langCheck)
@@ -231,11 +221,9 @@ def FindSubtitles(part):
 def getMetadataAtoms(part, metadata, type, episode=None):
   filename = part.file.decode('utf-8')
   file = os.path.basename(filename)
-  
   (file, ext) = os.path.splitext(file)
   if ext.lower() in ['.mp4', '.m4v', '.mov']:
     mp4fileTags = mp4file.Mp4File(filename)
-    
     try: metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))
     except: pass
     try:
@@ -243,19 +231,16 @@ def getMetadataAtoms(part, metadata, type, episode=None):
       if type == 'Movie': metadata.title = title
       else: episode.title = title
     except:
-      pass
-      
+      pass  
     try:
       try:
         summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/ldes') #long description
       except:
-        summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/desc') #short description
-        
+        summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/desc') #short description   
       if type == 'Movie': metadata.summary = summary
       else: episode.summary = summary
     except:
       pass
-
     if type == 'Movie':
       try: 
         genres = find_data(mp4fileTags, 'moov/udta/meta/ilst/genre') #genre
@@ -280,7 +265,6 @@ def getMetadataAtoms(part, metadata, type, episode=None):
         releaseDate = find_data(mp4fileTags, 'moov/udta/meta/ilst/year')
         releaseDate = releaseDate.split('T')[0]
         parsedDate = Datetime.ParseDate(releaseDate)
-        
         metadata.year = parsedDate.year
         metadata.originally_available_at = parsedDate.date() #release date
       except: 
