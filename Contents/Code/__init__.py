@@ -9,7 +9,7 @@ from mutagen.oggvorbis import OggVorbis
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
-subtitleExt       = ['utf','utf8','utf-8','sub','srt','smi','rt','ssa','aqt','jss','ass','idx']
+subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx'] #took out .sub, since we will be looking at .idx only
 
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
@@ -83,6 +83,17 @@ class localMediaTV(Agent.TV_Shows):
         # Whack it in case we wrote it.
         del metadata.seasons[s]
 
+class localMediaArtist(Agent.Artist):
+  name = 'Local Media Assets (Artists)'
+  languages = [Locale.Language.NoLanguage]
+  primary_provider = False
+  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+  
+  def search(self, results, media, lang):
+    results.Append(MetadataSearchResult(id = 'null', name=media.artist, score = 100))   
+  def update(self, metadata, media, lang):
+    pass 
+
 class localMediaAlbum(Agent.Album):
   name = 'Local Media Assets (Albums)'
   languages = [Locale.Language.NoLanguage]
@@ -91,7 +102,6 @@ class localMediaAlbum(Agent.Album):
 
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
-    return
 
   def update(self, metadata, media, lang):
     valid_posters = []
@@ -122,7 +132,10 @@ class localMediaAlbum(Agent.Album):
                   Log('skipping add for local art')
           # Look for embedded id3 APIC images in mp3 files
           if fext.lower() == '.mp3':
-            f = ID3(filename)
+            try: f = ID3(filename)
+            except: 
+              Log('Bad ID3 tags. Skipping.')
+              continue
             for frame in f.getall("APIC"):
               if (frame.mime == 'image/jpeg') or (frame.mime == 'image/jpg'): ext = 'jpg'
               elif frame.mime == 'image/png': ext = 'png'
@@ -137,7 +150,10 @@ class localMediaAlbum(Agent.Album):
                 Log('skipping already added APIC')
           # Look for coverart atoms in mp4/m4a
           elif fext.lower() in ['.mp4','.m4a','.m4p']:
-            mp4fileTags = mp4file.Mp4File(filename)
+            try: mp4fileTags = mp4file.Mp4File(filename)
+            except: 
+              Log('Bad mp4 tags. Skipping.')
+              continue
             try:
               data = find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart')
               posterName = hashlib.md5(data).hexdigest()
@@ -148,7 +164,10 @@ class localMediaAlbum(Agent.Album):
             except: pass
           # Look for coverart atoms in flac files
           elif fext.lower() == '.flac':
-            f = FLAC(filename)
+            try: f = FLAC(filename)
+            except: 
+              Log('Bad FLAC tags. Skipping.')
+              continue
             for p in f.pictures:
               posterName = hashlib.md5(p.data).hexdigest()
               if posterName not in metadata.posters:
@@ -188,7 +207,7 @@ def FindSubtitles(part):
   (fileroot, ext) = os.path.splitext(basename)
   fileroot = cleanFilename(fileroot) 
   ext = ext.lower()
-  path = os.path.dirname(filename) #get the path, without filename
+  path = os.path.dirname(filename) # get the path, without filename
   # Get all the files in the path.
   pathFiles = {}
   for p in os.listdir(path):
@@ -201,19 +220,33 @@ def FindSubtitles(part):
   for f in pathFiles:
     (froot, fext) = os.path.splitext(f)
     froot = cleanFilename(froot)
-    if f[0] != '.' and fext[1:].lower() in subtitleExt:
-      langCheck = cleanFilename(froot).split(' ')[-1].strip()
-      # Remove the language from the filename for comparison purposes.
-      frootNoLang = froot[:-(len(langCheck))-1].strip()
-      if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
-        Log('Found subtitle file: ' + f + ' language: ' + langCheck)
-        lang = Locale.Language.Match(langCheck)
-        part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
-        
-        if not lang_sub_map.has_key(lang):
-          lang_sub_map[lang] = []
-        lang_sub_map[lang].append(f)
-  
+    fext = fext[1:].lower()
+    if f[0] != '.' and fext in subtitleExt:
+      if fext == 'idx':
+        #** TODO: check for existence of .sub and/or .rar to confirm this makes sense?
+        idx = Core.storage.load(os.path.join(path,f))
+        if idx.count('VobSub index file') > 0: #confirm this is a vobsub file
+          langID = 0
+          idxSplit = idx.split('\nid: ')
+          for i in idxSplit[1:]: #find all the languages indexed
+            lang = i[:2]
+            #Log(str(langID) + ': ' + lang)
+            part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]), index=str(langID))
+            langID+=1
+            if not lang_sub_map.has_key(lang):
+              lang_sub_map[lang] = []
+            lang_sub_map[lang].append(f)
+      else:
+        langCheck = cleanFilename(froot).split(' ')[-1].strip()
+        # Remove the language from the filename for comparison purposes.
+        frootNoLang = froot[:-(len(langCheck))-1].strip()
+        if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
+          Log('Found subtitle file: ' + f + ' language: ' + langCheck)
+          lang = Locale.Language.Match(langCheck)
+          part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, pathFiles[f]))
+          if not lang_sub_map.has_key(lang):
+            lang_sub_map[lang] = []
+          lang_sub_map[lang].append(f)
   # Now whack subtitles that don't exist anymore.
   for lang in lang_sub_map.keys():
     part.subtitles[lang].validate_keys(lang_sub_map[lang])
