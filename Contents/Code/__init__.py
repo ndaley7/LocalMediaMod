@@ -1,5 +1,5 @@
 #local media assets agent
-import os, string, hashlib, base64
+import os, string, hashlib, base64, re
 from mp4file import atomsearch, mp4file
 from mutagen.id3 import ID3
 from mutagen.flac import FLAC
@@ -9,7 +9,7 @@ from mutagen.oggvorbis import OggVorbis
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
-subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx'] #took out .sub, since we will be looking at .idx only
+subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','txt'] #took out .sub, since we will be looking at .idx only
 
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
@@ -227,7 +227,6 @@ def FindSubtitles(part):
     addAll = False
     for f in pathFiles.keys():
       (froot, fext) = pathFiles[f].split('.')
-      Log(globalFolder)
       if globalFolder and froot != cleanFilename(fileroot): # we are looking in the global subtitle folder, so the filenames need to match
         continue
       if f[0] != '.' and fext in subtitleExt:
@@ -250,6 +249,13 @@ def FindSubtitles(part):
           # Remove the language from the filename for comparison purposes.
           frootNoLang = froot[:-(len(langCheck))-1].strip()
           if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
+            if fext == 'txt': #check to make sure this is a sub file
+              try:
+                txtLines = Core.storage.load(os.path.join(path,f)).splitlines(True)
+                if not re.match('^\{[0-9]*\}\{[0-9]*\}.*', txtLines[1]):
+                  continue
+              except:
+                continue
             Log('Found subtitle file: ' + f + ' language: ' + langCheck)
             lang = Locale.Language.Match(langCheck)
             part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, f))
