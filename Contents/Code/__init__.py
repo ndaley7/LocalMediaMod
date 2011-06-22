@@ -221,11 +221,16 @@ def FindSubtitles(part):
     for p in os.listdir(path):
       (r, n) = os.path.splitext(p.decode('utf-8'))
       pathFiles[p] = cleanFilename(r) + n.lower()
+      
     # Start with the existing languages.
     for lang in part.subtitles.keys():
       lang_sub_map[lang] = []
+      
     addAll = False
     for f in pathFiles.keys():
+      if pathFiles[f].find('.') == -1:
+        continue
+        
       (froot, fext) = pathFiles[f].split('.')
       if globalFolder and froot != cleanFilename(fileroot): # we are looking in the global subtitle folder, so the filenames need to match
         continue
