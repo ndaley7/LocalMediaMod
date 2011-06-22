@@ -235,20 +235,32 @@ def FindSubtitles(part):
       if globalFolder and froot != cleanFilename(fileroot): # we are looking in the global subtitle folder, so the filenames need to match
         continue
       if f[0] != '.' and fext in subtitleExt:
+        
         if fext == 'idx': # file is .idx (vobsub)
           if (froot + '.sub') in pathFiles.values(): # and we have a matching .sub file
             idx = Core.storage.load(os.path.join(path,f))
             if idx.count('VobSub index file') > 0: #confirm this is a vobsub file
               langID = 0
               idxSplit = idx.split('\nid: ')
+              
+              languages = {}
               for i in idxSplit[1:]: #find all the languages indexed
                 lang = i[:2]
+                if not languages.has_key(lang):
+                  languages[lang] = []
+              
                 Log('Found .idx subtitle file: ' + f + ' language: ' + lang + ' stream index: ' + str(langID))
-                part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, f), index=str(langID))
+                languages[lang].append(Proxy.LocalFile(os.path.join(path, f), index=str(langID)))
                 langID+=1
+                
                 if not lang_sub_map.has_key(lang):
                   lang_sub_map[lang] = []
                 lang_sub_map[lang].append(f)
+                
+              for lang,subs in languages.items():
+                print "Adding for language:", lang, "=>", subs
+                part.subtitles[lang][f] = subs
+                
         else:
           langCheck = cleanFilename(froot).split(' ')[-1].strip()
           # Remove the language from the filename for comparison purposes.
