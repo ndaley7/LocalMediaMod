@@ -202,7 +202,7 @@ class localMediaAlbum(Agent.Album):
                   else:
                     Log('skipping already added ogg art')
             except: pass        
-    #metadata.posters.validate_keys(valid_posters)
+    metadata.posters.validate_keys(valid_posters)
             
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
