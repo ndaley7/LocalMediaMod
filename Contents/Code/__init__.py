@@ -11,6 +11,13 @@ artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
 subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','txt'] #took out .sub, since we will be looking at .idx only
 
+# A platform independent way to split paths which might come in with different separators.
+def SplitPath(str):
+  if str.find('\\') != -1:
+    return str.split('\\')
+  else:
+    return str.split('/')
+
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
   languages = [Locale.Language.NoLanguage]
@@ -23,8 +30,8 @@ class localMediaMovie(Agent.Movies):
   def update(self, metadata, media, lang):
     filename = media.items[0].parts[0].file.decode('utf-8')   
     path = os.path.dirname(filename)
-    if 'video_ts' == path.lower().split('/')[-1]:
-      path = '/'.join(path.split('/')[:-1])
+    if 'video_ts' == SplitPath(path.lower())[-1]:
+      path = '/'.join(SplitPath(path)[:-1])
     basename = os.path.basename(filename)
     (fileroot, ext) = os.path.splitext(basename)
     pathFiles = {}
@@ -32,7 +39,7 @@ class localMediaMovie(Agent.Movies):
       pathFiles[p.lower()] = p
     # Add the filename as a base, and the dirname as a base for poster lookups
     passFiles = {}
-    passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]] 
+    passFiles['posters'] = artFiles['posters'] + [fileroot, SplitPath(path)[-1]] 
     passFiles['art'] = artFiles['art'] + [fileroot + '-fanart'] 
     # Look for posters and art
     valid_art = []
@@ -116,7 +123,7 @@ class localMediaAlbum(Agent.Album):
             pathFiles[pth.lower()] = pth
           # Add the filename as a base, and the dirname as a base for poster lookups
           passFiles = {}
-          passFiles['posters'] = artFiles['posters'] + [fileroot, path.split('/')[-1]]
+          passFiles['posters'] = artFiles['posters'] + [fileroot, SplitPath(path)[-1]]
           # Look for posters
           for e in artExt:
             for a in passFiles['posters']:
