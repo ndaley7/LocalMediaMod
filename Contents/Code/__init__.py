@@ -28,6 +28,9 @@ class localMediaMovie(Agent.Movies):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
     
   def update(self, metadata, media, lang):
+    # Set title if needed.
+    if media and metadata.title is None: metadata.title = media.title
+    
     filename = media.items[0].parts[0].file.decode('utf-8')   
     path = os.path.dirname(filename)
     if 'video_ts' == SplitPath(path.lower())[-1]:
@@ -76,6 +79,9 @@ class localMediaTV(Agent.TV_Shows):
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
   def update(self, metadata, media, lang):
+    # Set title if needed.
+    if media and metadata.title is None: metadata.title = media.title
+    
     # Look for subtitles for each episode.
     for s in media.seasons:
       # If we've got a date based season, ignore it for now, otherwise it'll collide with S/E folders/XML and PMS
@@ -99,6 +105,8 @@ class localMediaArtist(Agent.Artist):
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', name=media.artist, score = 100))   
   def update(self, metadata, media, lang):
+    # Set title if needed.
+    if media and metadata.title is None: metadata.title = media.title
     pass 
 
 class localMediaAlbum(Agent.Album):
@@ -111,6 +119,9 @@ class localMediaAlbum(Agent.Album):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
+    # Set title if needed.
+    if media and metadata.title is None: metadata.title = media.title
+      
     valid_posters = []
     for t in media.tracks:
       for i in media.tracks[t].items:
