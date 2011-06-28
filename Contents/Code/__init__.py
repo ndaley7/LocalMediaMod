@@ -276,7 +276,6 @@ def FindSubtitles(part):
                 lang_sub_map[lang].append(f)
                 
               for lang,subs in languages.items():
-                print "Adding for language:", lang, "=>", subs
                 part.subtitles[lang][f] = subs
                 
         else:
