@@ -9,13 +9,13 @@ from mutagen.oggvorbis import OggVorbis
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
-subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','txt'] #took out .sub, since we will be looking at .idx only
+subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','sub','txt']
 
 # A platform independent way to split paths which might come in with different separators.
 def SplitPath(str):
   if str.find('\\') != -1:
     return str.split('\\')
-  else:
+  else: 
     return str.split('/')
 
 class localMediaMovie(Agent.Movies):
@@ -99,7 +99,7 @@ class localMediaArtist(Agent.Artist):
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', name=media.artist, score = 100))   
   def update(self, metadata, media, lang):
-    pass 
+    pass
 
 class localMediaAlbum(Agent.Album):
   name = 'Local Media Assets (Albums)'
@@ -201,9 +201,9 @@ class localMediaAlbum(Agent.Album):
                     valid_posters.append(posterName)
                   else:
                     Log('skipping already added ogg art')
-            except: pass        
+            except: pass     
     metadata.posters.validate_keys(valid_posters)
-            
+
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
   return string.translate(filename.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).strip().lower()
@@ -237,7 +237,7 @@ def FindSubtitles(part):
     for f in pathFiles.keys():
       if pathFiles[f].find('.') == -1:
         continue
-        
+      codec = None  
       (froot, fext) = pathFiles[f].split('.')
       if globalFolder and froot != cleanFilename(fileroot): # we are looking in the global subtitle folder, so the filenames need to match
         continue
@@ -267,22 +267,25 @@ def FindSubtitles(part):
               for lang,subs in languages.items():
                 print "Adding for language:", lang, "=>", subs
                 part.subtitles[lang][f] = subs
-                
         else:
           langCheck = cleanFilename(froot).split(' ')[-1].strip()
           # Remove the language from the filename for comparison purposes.
           frootNoLang = froot[:-(len(langCheck))-1].strip()
           if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
-            if fext == 'txt': #check to make sure this is a sub file
+            if fext == 'txt' or fext == 'sub': #check to make sure this is a sub file
               try:
                 txtLines = Core.storage.load(os.path.join(path,f)).splitlines(True)
-                if not re.match('^\{[0-9]*\}\{[0-9]*\}.*', txtLines[1]):
+                if re.match('^\{[0-9]+\}\{[0-9]*\}', txtLines[1]):
+                  codec = 'microdvd'
+                elif re.match('^[0-9]{1,2}:[0-9]{2}:[0-9]{2}[:=,]', txtLines[1]):
+                  codec = 'txt'
+                else:
                   continue
               except:
                 continue
-            Log('Found subtitle file: ' + f + ' language: ' + langCheck)
+            Log('Found subtitle file: ' + f + ' language: ' + langCheck + ' codec: ' + str(codec))
             lang = Locale.Language.Match(langCheck)
-            part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, f))
+            part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, f), codec=codec)
             if not lang_sub_map.has_key(lang):
               lang_sub_map[lang] = []
             lang_sub_map[lang].append(f)
