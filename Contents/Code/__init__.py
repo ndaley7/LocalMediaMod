@@ -176,7 +176,7 @@ class localMediaAlbum(Agent.Album):
               data = find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart')
               posterName = hashlib.md5(data).hexdigest()
               if posterName not in metadata.posters:
-                metadata.posters['atom_coverart'] = Proxy.Media(data)
+                metadata.posters[posterName] = Proxy.Media(data)
                 valid_posters.append(posterName)
                 Log('Adding embedded coverart from m4a/mp4 file: ' + filename)
             except: pass
@@ -212,7 +212,7 @@ class localMediaAlbum(Agent.Album):
                     valid_posters.append(posterName)
                   else:
                     Log('skipping already added ogg art')
-            except: pass     
+            except: pass
     metadata.posters.validate_keys(valid_posters)
 
 def cleanFilename(filename):
