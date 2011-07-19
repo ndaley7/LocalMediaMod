@@ -254,7 +254,7 @@ def FindSubtitles(part):
       (r, n) = os.path.splitext(p.decode('utf-8'))
       pathFiles[p] = cleanFilename(r) + n.lower()
       # Also, check to see if we have only one video filetype in this dir
-      if n.lower() in video_exts:
+      if n.lower()[1:] in video_exts:
         totalVidFiles += 1
     
     # If we have only one video file in the dir, then we will addAll the subs we find    
