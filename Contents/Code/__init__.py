@@ -10,7 +10,10 @@ artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
 subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','sub','txt']
-
+video_exts        = ['3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 
+                     'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 
+                     'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob', 'vp3', 'wmv', 'wpl', 'xsp', 'xvid']
+              
 # A platform independent way to split paths which might come in with different separators.
 def SplitPath(str):
   if str.find('\\') != -1:
@@ -244,17 +247,25 @@ def FindSubtitles(part):
     # get the path, without filename
     path = os.path.dirname(filename)
     
+    totalVidFiles = 0
     # Get all the files in the path.
     pathFiles = {}
     for p in os.listdir(path):
       (r, n) = os.path.splitext(p.decode('utf-8'))
       pathFiles[p] = cleanFilename(r) + n.lower()
+      # Also, check to see if we have only one video filetype in this dir
+      if n.lower() in video_exts:
+        totalVidFiles += 1
+    
+    # If we have only one video file in the dir, then we will addAll the subs we find    
+    if totalVidFiles == 1:
+      addAll = True
+    else:
+      addAll = False  
       
     # Start with the existing languages.
     for lang in part.subtitles.keys():
       lang_sub_map[lang] = []
-      
-    addAll = False
     
     for f in pathFiles.keys():
       if pathFiles[f].find('.') == -1:
