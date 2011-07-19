@@ -222,18 +222,28 @@ def cleanFilename(filename):
 def FindSubtitles(part):
   globalSubtitleFolder = os.path.join(Core.app_support_path, 'Subtitles')
   pathsToCheck = [part.file.decode('utf-8')] # full pathname
-   # filename only (no path)
+  
+  # filename only (no path)
   if os.path.exists(globalSubtitleFolder):
     pathsToCheck.append(os.path.join(globalSubtitleFolder, os.path.basename(pathsToCheck[0])))
   lang_sub_map = {}
+  
   for filename in pathsToCheck:
-    if filename.count(globalSubtitleFolder) > 0: globalFolder = True
-    else: globalFolder = False
+    
+    # See if we're in the global folder.
+    if filename.count(globalSubtitleFolder) > 0: 
+      globalFolder = True
+    else: 
+      globalFolder = False
+      
     basename = os.path.basename(filename)
     (fileroot, ext) = os.path.splitext(basename)
     fileroot = cleanFilename(fileroot)
     ext = ext.lower()
-    path = os.path.dirname(filename) # get the path, without filename
+    
+    # get the path, without filename
+    path = os.path.dirname(filename)
+    
     # Get all the files in the path.
     pathFiles = {}
     for p in os.listdir(path):
@@ -250,8 +260,11 @@ def FindSubtitles(part):
         continue
       codec = None  
       (froot, fext) = pathFiles[f].split('.')
-      if globalFolder and froot != cleanFilename(fileroot): # we are looking in the global subtitle folder, so the filenames need to match
+      
+      # we are looking in the global subtitle folder, so the filenames need to match
+      if globalFolder and froot != cleanFilename(fileroot): 
         continue
+        
       if f[0] != '.' and fext in subtitleExt:
         
         if fext == 'idx': # file is .idx (vobsub)
@@ -293,12 +306,14 @@ def FindSubtitles(part):
                   continue
               except:
                 continue
+                
             Log('Found subtitle file: ' + f + ' language: ' + langCheck + ' codec: ' + str(codec))
             lang = Locale.Language.Match(langCheck)
             part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, f), codec=codec)
             if not lang_sub_map.has_key(lang):
               lang_sub_map[lang] = []
             lang_sub_map[lang].append(f)
+            
   # Now whack subtitles that don't exist anymore.
   for lang in lang_sub_map.keys():
     part.subtitles[lang].validate_keys(lang_sub_map[lang])
