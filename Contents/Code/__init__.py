@@ -270,6 +270,7 @@ def FindSubtitles(part):
     for f in pathFiles.keys():
       if pathFiles[f].find('.') == -1:
         continue
+        
       codec = None  
       (froot, fext) = pathFiles[f].split('.')
       
@@ -279,11 +280,12 @@ def FindSubtitles(part):
 
       if f[0] != '.' and fext in subtitleExt:
 
-        # If it matches or we're adding everything.
-        if addAll or fileroot == froot:
+        # Is this an IDX file and we have a matching SUB file.
+        if fext == 'idx' and (froot + '.sub') in pathFiles.values():
+
+          # If it matches or we're adding everything.
+          if addAll or fileroot == froot:
           
-          # Is this an IDX file and we have a matching SUB file.
-          if fext == 'idx' and (froot + '.sub') in pathFiles.values():
             idx = Core.storage.load(os.path.join(path,f))
             if idx.count('VobSub index file') > 0: #confirm this is a vobsub file
               langID = 0
