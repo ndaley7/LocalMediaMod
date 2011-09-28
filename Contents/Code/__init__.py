@@ -9,7 +9,7 @@ from mutagen.oggvorbis import OggVorbis
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
-subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','sub','txt']
+subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','sub','txt', 'psb']
 video_exts        = ['3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 
                      'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 
                      'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob', 'vp3', 'wmv', 'wpl', 'xsp', 'xvid']
@@ -316,15 +316,20 @@ def FindSubtitles(part):
           if addAll or ((fileroot == froot) or (fileroot == frootNoLang)):
             if fext == 'txt' or fext == 'sub': #check to make sure this is a sub file
               try:
-                txtLines = Core.storage.load(os.path.join(path,f)).splitlines(True)
+                txtLines = [l.strip() for l in Core.storage.load(os.path.join(path,f)).splitlines(True)]
                 if re.match('^\{[0-9]+\}\{[0-9]*\}', txtLines[1]):
                   codec = 'microdvd'
                 elif re.match('^[0-9]{1,2}:[0-9]{2}:[0-9]{2}[:=,]', txtLines[1]):
                   codec = 'txt'
+                elif '[SUBTITLE]' in txtLines:
+                  codec = 'subviewer'
                 else:
                   continue
               except:
                 continue
+            
+            if codec is None and fext in ('ass', 'ssa', 'smi', 'srt', 'psb'):
+              codec = fext.replace('ass', 'ssa')
                 
             Log('Found subtitle file: ' + f + ' language: ' + langCheck + ' codec: ' + str(codec))
             lang = Locale.Language.Match(langCheck)
