@@ -318,11 +318,11 @@ def FindSubtitles(part):
               try:
                 txtLines = [l.strip() for l in Core.storage.load(os.path.join(path,f)).splitlines(True)]
                 if re.match('^\{[0-9]+\}\{[0-9]*\}', txtLines[1]):
-                  codec = 'microdvd'
+                  pass #codec = 'microdvd'
                 elif re.match('^[0-9]{1,2}:[0-9]{2}:[0-9]{2}[:=,]', txtLines[1]):
-                  codec = 'txt'
+                  pass #codec = 'txt'
                 elif '[SUBTITLE]' in txtLines:
-                  codec = 'subviewer'
+                  pass #codec = 'subviewer'
                 else:
                   continue
               except:
