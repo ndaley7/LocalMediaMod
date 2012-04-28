@@ -59,13 +59,13 @@ class localMediaMovie(Agent.Movies):
             if t == 'posters':
               if f not in metadata.posters:
                 metadata.posters[f] = Proxy.Media(data)
-                valid_posters.append(f)
                 Log('Local asset (type: ' + t + ') added: ' + f)
+              valid_posters.append(f)
             elif t == 'art':
               if f not in metadata.art:
                 metadata.art[f] = Proxy.Media(data)
-                valid_art.append(f)
                 Log('Local asset (type: ' + t + ') added: ' + f)
+              valid_art.append(f)
     metadata.posters.validate_keys(valid_posters)
     metadata.art.validate_keys(valid_art)
     # Look for subtitles
