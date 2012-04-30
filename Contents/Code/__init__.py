@@ -6,6 +6,8 @@ from mutagen.flac import FLAC
 from mutagen.flac import Picture
 from mutagen.oggvorbis import OggVorbis
 
+imageExt          = ['jpg', 'png', 'jpeg', 'tbn']
+audioExt          = ['mp3']
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
                      'art':     ['fanart']}        
@@ -33,46 +35,34 @@ class localMediaMovie(Agent.Movies):
   def update(self, metadata, media, lang):
     # Set title if needed.
     if media and metadata.title is None: metadata.title = media.title
-    
+
     filename = media.items[0].parts[0].file.decode('utf-8')   
     path = os.path.dirname(filename)
-    if 'video_ts' == SplitPath(path.lower())[-1]:
-      path = '/'.join(SplitPath(path)[:-1])
-    basename = os.path.basename(filename)
-    (fileroot, ext) = os.path.splitext(basename)
-    pathFiles = {}
-    for p in os.listdir(path):
-      pathFiles[p.lower()] = p
-    # Add the filename as a base, and the dirname as a base for poster lookups
-    passFiles = {}
-    passFiles['posters'] = artFiles['posters'] + [fileroot, SplitPath(path)[-1]] 
-    passFiles['art'] = artFiles['art'] + [fileroot + '-fanart'] 
-    # Look for posters and art
-    valid_art = []
-    valid_posters = []  
-    for t in ['posters','art']:
-      for e in artExt:
-        for a in passFiles[t]:
-          f = (a + '.' + e).lower()
-          if f in pathFiles.keys():
-            data = Core.storage.load(os.path.join(path, pathFiles[f]))
-            if t == 'posters':
-              if f not in metadata.posters:
-                metadata.posters[f] = Proxy.Media(data)
-                Log('Local asset (type: ' + t + ') added: ' + f)
-              valid_posters.append(f)
-            elif t == 'art':
-              if f not in metadata.art:
-                metadata.art[f] = Proxy.Media(data)
-                Log('Local asset (type: ' + t + ') added: ' + f)
-              valid_art.append(f)
-    metadata.posters.validate_keys(valid_posters)
-    metadata.art.validate_keys(valid_art)
+    
+    # Look for media.
+    try: FindMediaForItem(metadata, [path], 'movie', media.items[0].parts[0])
+    except: raise #Log('Error finding media for movie %s', media.title)
+
     # Look for subtitles
     for i in media.items:
       for part in i.parts:
         FindSubtitles(part)
     getMetadataAtoms(part, metadata, type='Movie')
+
+def FindUniqueSubdirs(dirs):
+  final_dirs = {}
+  for dir in dirs:
+    final_dirs[dir] = True
+    try: 
+      parent = os.path.split(dir)[0]
+      final_dirs[parent] = True
+      try: final_dirs[os.path.split(parent)[0]] = True
+      except: pass
+    except: pass
+    
+  if final_dirs.has_key(''):
+    del final_dirs['']
+  return final_dirs
 
 class localMediaTV(Agent.TV_Shows):
   name = 'Local Media Assets (TV)'
@@ -84,7 +74,38 @@ class localMediaTV(Agent.TV_Shows):
   def update(self, metadata, media, lang):
     # Set title if needed.
     if media and metadata.title is None: metadata.title = media.title
+
+    # Look for media, collect directories.
+    dirs = {}
+    for s in media.seasons:
+      Log('Creating season %s', s)
+      metadata.seasons[s].index = int(s)
+      for e in media.seasons[s].episodes:
+        
+        # Make sure metadata exists, and find sidecar media.
+        episodeMetadata = metadata.seasons[s].episodes[e]
+        episodeMedia = media.seasons[s].episodes[e].items[0]
+        dir = os.path.dirname(episodeMedia.parts[0].file.decode('utf-8'))
+        dirs[dir] = True
+        
+        try: FindMediaForItem(episodeMetadata, [dir], 'episode', episodeMedia.parts[0])
+        except: raise
+        
+    # Figure out the directories we should be looking in.
+    try: dirs = FindUniqueSubdirs(dirs)
+    except: dirs = []
     
+    # Look for show images.
+    Log("Looking for show media for %s.", metadata.title)
+    try: FindMediaForItem(metadata, dirs, 'show')
+    except: Log("Error finding show media.")
+    
+    # Look for season images.
+    for s in metadata.seasons:
+      Log('Looking for season media for %s season %s.', metadata.title, s)
+      try: FindMediaForItem(metadata.seasons[s], dirs, 'season')
+      except: Log("Error finding season media for season %s" % s)
+        
     # Look for subtitles for each episode.
     for s in media.seasons:
       # If we've got a date based season, ignore it for now, otherwise it'll collide with S/E folders/XML and PMS
@@ -92,12 +113,14 @@ class localMediaTV(Agent.TV_Shows):
       if int(s) < 1900:
         for e in media.seasons[s].episodes:
           for i in media.seasons[s].episodes[e].items:
+            # Look for subtitles.
             for part in i.parts:
               FindSubtitles(part)
               getMetadataAtoms(part, metadata, type='TV', episode=metadata.seasons[s].episodes[e])
       else:
         # Whack it in case we wrote it.
-        del metadata.seasons[s]
+        #del metadata.seasons[s]
+        pass
 
 class localMediaArtist(Agent.Artist):
   name = 'Local Media Assets (Artists)'
@@ -145,9 +168,9 @@ class localMediaAlbum(Agent.Album):
               if f in pathFiles.keys():
                 data = Core.storage.load(os.path.join(path, pathFiles[f]))
                 posterName = hashlib.md5(data).hexdigest()
+                valid_posters.append(posterName)
                 if posterName not in metadata.posters:
                   metadata.posters[posterName] = Proxy.Media(data)
-                  valid_posters.append(posterName)
                   Log('Local asset image added: ' + f + ', for file: ' + filename)
                 else:
                   Log('skipping add for local art')
@@ -163,10 +186,10 @@ class localMediaAlbum(Agent.Album):
               elif frame.mime == 'image/gif': ext = 'gif'
               else: ext = ''
               posterName = hashlib.md5(frame.data).hexdigest()
+              valid_posters.append(posterName)
               if posterName not in metadata.posters:
                 Log('Adding embedded APIC art from mp3 file: ' + filename)
                 metadata.posters[posterName] = Proxy.Media(frame.data, ext=ext)
-                valid_posters.append(posterName)
               else:
                 Log('skipping already added APIC')
           # Look for coverart atoms in mp4/m4a
@@ -178,9 +201,9 @@ class localMediaAlbum(Agent.Album):
             try:
               data = find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart')
               posterName = hashlib.md5(data).hexdigest()
+              valid_posters.append(posterName)
               if posterName not in metadata.posters:
                 metadata.posters[posterName] = Proxy.Media(data)
-                valid_posters.append(posterName)
                 Log('Adding embedded coverart from m4a/mp4 file: ' + filename)
             except: pass
           # Look for coverart atoms in flac files
@@ -191,10 +214,10 @@ class localMediaAlbum(Agent.Album):
               continue
             for p in f.pictures:
               posterName = hashlib.md5(p.data).hexdigest()
+              valid_posters.append(posterName)
               if posterName not in metadata.posters:
                 Log('Adding embedded art from FLAC file: ' + filename)
                 metadata.posters[posterName] = Proxy.Media(p.data)
-                valid_posters.append(posterName)
               else:
                 Log('skipping already added FLAC art')
           # Look for coverart atoms in ogg files
@@ -209,10 +232,10 @@ class localMediaAlbum(Agent.Album):
                   elif p.mime == 'image/gif': ext = 'gif'
                   else: ext = ''
                   posterName = hashlib.md5(p.data).hexdigest()
+                  valid_posters.append(posterName)
                   if posterName not in metadata.posters:
                     Log('Adding embedded art from FLAC file: ' + filename)
                     metadata.posters[posterName] = Proxy.Media(p.data, ext=ext)
-                    valid_posters.append(posterName)
                   else:
                     Log('skipping already added ogg art')
             except: pass
@@ -221,6 +244,75 @@ class localMediaAlbum(Agent.Album):
 def cleanFilename(filename):
   #this will remove any whitespace and punctuation chars and replace them with spaces, strip and return as lowercase
   return string.translate(filename.encode('utf-8'), string.maketrans(string.punctuation + string.whitespace, ' ' * len (string.punctuation + string.whitespace))).strip().lower()
+
+def GetFileRoot(part):
+  if part:
+    filename = part.file.decode('utf-8')
+    path = os.path.dirname(filename)
+    if 'video_ts' == SplitPath(path.lower())[-1]:
+      path = '/'.join(SplitPath(path)[:-1])
+    basename = os.path.basename(filename)
+    (fileroot, ext) = os.path.splitext(basename)
+    return fileroot
+  return None
+
+def FindMediaForItem(metadata, paths, type, part = None):
+  fileroot = GetFileRoot(part)
+  
+  # Get files in directories.
+  path_files = {}
+  total_media_files = 0
+  for path in paths:
+    for p in os.listdir(path):
+      if os.path.isfile(os.path.join(path, p)):
+        path_files[p.lower()] = os.path.join(path, p)
+      (r, n) = os.path.splitext(p.decode('utf-8'))
+      if n.lower()[1:] in video_exts:
+        total_media_files += 1
+      
+  Log('Looking for %s media (%s) in %d paths (fileroot: %s) with %d media files.', type, metadata.title, len(paths), fileroot, total_media_files)
+  Log('Paths: %s', str(paths))
+    
+  # Figure out what regexs to use.
+  search_tuples = []
+  if type == 'season':
+    search_tuples += [['season-?%s[-a-z]?' % metadata.index, metadata.posters, imageExt, False]]
+    search_tuples += [['season-?%s-banner[-a-z]?' % metadata.index, metadata.banners, imageExt, False]]
+  elif type == 'show':
+    search_tuples += [['show-?[0-9]?', metadata.posters, imageExt, False]]
+    search_tuples += [['banner-?[0-9]?', metadata.banners, imageExt, False]]
+    search_tuples += [['fanart-?[0-9]?', metadata.art, imageExt, False]]
+    search_tuples += [['theme-?[0-9]?', metadata.themes, audioExt, False]]
+  elif type == 'episode':
+    search_tuples += [[fileroot + '-?[0-9]?', metadata.thumbs, imageExt, False]]
+  elif type == 'movie':
+    search_tuples += [['(poster|default|cover|movie|folder|' + fileroot + ')-?[0-9]?', metadata.posters, imageExt, True]]
+    search_tuples += [['(fanart|' + fileroot + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
+
+  for (pattern, media_list, extensions, limited) in search_tuples:
+    valid_things = []
+    
+    for p in path_files:
+      for ext in extensions:
+        if re.match('%s.%s' % (pattern, ext), p, re.IGNORECASE):
+
+          # Use a pattern if it's unlimited, or if there's only one media file.
+          if (limited and total_media_files == 1) or (not limited) or (p.find(fileroot.lower()) == 0):
+
+            # Read data and hash it.
+            data = Core.storage.load(path_files[p])
+            media_hash = hashlib.md5(data).hexdigest()
+      
+            # See if we need to add it.
+            valid_things.append(media_hash)
+            if media_hash not in media_list:
+              media_list[media_hash] = Proxy.Media(data)
+              Log('  Local asset added: %s (%s)', path_files[p], media_hash)
+          else:
+            Log('Skipping file %s because there are %d media files.', p, total_media_files)
+              
+    Log('Found %d valid things for pattern %s (ext: %s)', len(valid_things), pattern, str(extensions))
+    media_list.validate_keys(valid_things)
 
 def FindSubtitles(part):
   globalSubtitleFolder = os.path.join(Core.app_support_path, 'Subtitles')
