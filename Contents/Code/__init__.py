@@ -1,6 +1,6 @@
 #local media assets agent
-import os, string, hashlib, base64, re
-from mp4file import atomsearch, mp4file
+import os, string, hashlib, base64, re, plistlib
+from mutagen.mp4 import MP4
 from mutagen.id3 import ID3
 from mutagen.flac import FLAC
 from mutagen.flac import Picture
@@ -203,12 +203,12 @@ class localMediaAlbum(Agent.Album):
                 Log('skipping already added APIC')
           # Look for coverart atoms in mp4/m4a
           elif fext.lower() in ['.mp4','.m4a','.m4p']:
-            try: mp4fileTags = mp4file.Mp4File(filename)
+            try: mp4fileTags = MP4(filename)
             except: 
               Log('Bad mp4 tags. Skipping.')
               continue
             try:
-              data = find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart')
+              data = str(mp4fileTags["covr"][0])
               posterName = hashlib.md5(data).hexdigest()
               valid_posters.append(posterName)
               if posterName not in metadata.posters:
@@ -495,8 +495,3 @@ def getMetadataAtoms(part, metadata, type, episode=None):
       except: 
         pass
      
-def find_data(atom, name):
-  child = atomsearch.find_path(atom, name)
-  data_atom = child.find('data')
-  if data_atom and 'data' in data_atom.attrs:
-    return data_atom.attrs['data']
