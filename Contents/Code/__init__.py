@@ -448,50 +448,105 @@ def getMetadataAtoms(part, metadata, type, episode=None):
   file = os.path.basename(filename)
   (file, ext) = os.path.splitext(file)
   if ext.lower() in ['.mp4', '.m4v', '.mov']:
-    mp4fileTags = mp4file.Mp4File(filename)
-    try: metadata.posters['atom_coverart'] = Proxy.Media(find_data(mp4fileTags, 'moov/udta/meta/ilst/coverart'))
-    except: pass
-    try:
-      title = find_data(mp4fileTags, 'moov/udta/meta/ilst/title') #Name
-      if type == 'Movie': metadata.title = title
-      else: episode.title = title
-    except:
-      pass  
-    try:
-      try:
-        summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/ldes') #long description
-      except:
-        summary = find_data(mp4fileTags, 'moov/udta/meta/ilst/desc') #short description   
-      if type == 'Movie': metadata.summary = summary
-      else: episode.summary = summary
-    except:
-      pass
+    tags = MP4(filename)
+    
     if type == 'Movie':
-      try: 
-        genres = find_data(mp4fileTags, 'moov/udta/meta/ilst/genre') #genre
-        if len(genres) > 0:
-          genList = genres.split(',')
-          metadata.genres.clear()
-          for g in genList:
-            metadata.genres.add(g.strip())
-      except: 
-        pass
-      try: 
-        artists = find_data(mp4fileTags, 'moov/udta/meta/ilst/artist') #artist
-        if len(artists) > 0:
-          artList = artists.split(',')
-          metadata.roles.clear()
-          for a in artList:
-            role = metadata.roles.new()
-            role.actor = a.strip()
-      except: 
-        pass
+      item = metadata
+    elif type == 'TV':
+      item = episode
+    
+    #Coverart
+    try: 
+      item.posters['atom_coverart'] = Proxy.Media(str(tags["covr"][0]))
+    except: pass
+    
+    #Title from name atom
+    try:
+      title = tags["\xa9nam"][0]
+      item.title = title
+    except: pass
+    
+    #Summary from long/short decription atom
+    try:
       try:
-        releaseDate = find_data(mp4fileTags, 'moov/udta/meta/ilst/year')
-        releaseDate = releaseDate.split('T')[0]
-        parsedDate = Datetime.ParseDate(releaseDate)
-        metadata.year = parsedDate.year
-        metadata.originally_available_at = parsedDate.date() #release date
-      except: 
-        pass
+        summary = tags["ldes"][0]
+      except:
+        summary = tags["desc"][0]
+      item.summary = summary
+    except: pass
+
+    #Genres from genre atom
+    try:
+      genres = tags["\xa9gen"][0]
+      if len(genres) > 0:
+        genList = genres.split('/')
+        metadata.genres.clear()
+        for g in genList:
+          metadata.genres.add(g.strip())
+    except: pass 
      
+    #Roles from Artist atom
+    try: 
+      artists = tags["\xa9ART"][0]
+      if len(artists) > 0:
+        artList = artists.split(',')
+        item.roles.clear()
+        for a in artList:
+          role = item.roles.new()
+          role.actor = a.strip()
+    except: pass
+    
+    #Release date from year atom
+    try:
+      releaseDate = tags["\xa9day"][0]
+      releaseDate = releaseDate.split('T')[0]
+      parsedDate = Datetime.ParseDate(releaseDate)
+      item.originally_available_at = parsedDate.date()
+      item.year = parsedDate.year
+    except: pass
+      
+    #Directors from the iTunMOVI-directors atom
+    try:
+      pl = plistlib.readPlistFromString(str(tags["----:com.apple.iTunes:iTunMOVI"][0]))
+      directors = pl["directors"][0]["name"]
+      if len(directors) > 0:
+        dirList = directors.split("/")
+        item.directors.clear()
+        for d in dirList:
+          item.directors.add(d.strip())
+    except: pass
+    
+    #Writers from the iTunMOVI-screenwriters atom
+    try:
+      pl = plistlib.readPlistFromString(str(tags["----:com.apple.iTunes:iTunMOVI"][0]))
+      writers = pl["screenwriters"][0]["name"]
+      if len(directors) > 0:
+        wriList = writers.split("/")
+        item.writers.clear()
+        for w in wriList:
+          item.writers.add(w.strip())
+    except: pass
+    
+    #Content rating from iTunEXTC atom
+    try:
+      rating = tags["----:com.apple.iTunes:iTunEXTC"][0].split('|')[1]
+      if len(rating) > 0:
+        episode.content_rating = rating
+    except: pass
+    
+    #Studio from copyright atom
+    try:
+      copyright = tags["cprt"][0]
+      if len(copyright) > 0:
+        item.studio = copyright
+    except: pass
+    
+    #Collection from album atom
+    try:
+      album = tags["\xa9alb"][0]
+      if len(album) > 0:
+        albumList = album.split('/')
+        item.collections.clear()
+        for a in albumList:
+          item.collections.add(a.strip())
+    except: pass
