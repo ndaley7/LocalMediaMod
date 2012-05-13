@@ -185,10 +185,19 @@ class localMediaAlbum(Agent.Album):
             except: 
               Log('Bad ID3 tags. Skipping.')
               continue
+            #available_at date from TDRC  
             try:
               metadata.originally_available_at = Datetime.ParseDate('01-01-' + f.getall("TDRC")[0].text[0].get_text()).date()
             except:
               pass
+            #Genres from TCON
+            try:
+              genres = f.getall('TCON')
+              metadata.genres.clear()
+              for g in genres:
+                metadata.genres.add(g)
+            except: 
+              pass            
             for frame in f.getall("APIC"):
               if (frame.mime == 'image/jpeg') or (frame.mime == 'image/jpg'): ext = 'jpg'
               elif frame.mime == 'image/png': ext = 'png'
