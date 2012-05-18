@@ -299,7 +299,7 @@ def FindMediaForItem(metadata, paths, type, part = None):
   elif type == 'show':
     search_tuples += [['show-?[0-9]?', metadata.posters, imageExt, False]]
     search_tuples += [['banner-?[0-9]?', metadata.banners, imageExt, False]]
-    search_tuples += [['fanart-?[0-9]?', metadata.art, imageExt, False]]
+    search_tuples += [['(fanart|art|background)-?[0-9]?', metadata.art, imageExt, False]]
     search_tuples += [['theme-?[0-9]?', metadata.themes, audioExt, False]]
   elif type == 'episode':
     search_tuples += [[fileroot + '-?[0-9]?', metadata.thumbs, imageExt, False]]
