@@ -297,7 +297,7 @@ def FindMediaForItem(metadata, paths, type, part = None):
     search_tuples += [['season-?%s[-a-z]?' % metadata.index, metadata.posters, imageExt, False]]
     search_tuples += [['season-?%s-banner[-a-z]?' % metadata.index, metadata.banners, imageExt, False]]
   elif type == 'show':
-    search_tuples += [['show-?[0-9]?', metadata.posters, imageExt, False]]
+    search_tuples += [['(show|poster)-?[0-9]?', metadata.posters, imageExt, False]]
     search_tuples += [['banner-?[0-9]?', metadata.banners, imageExt, False]]
     search_tuples += [['(fanart|art|background)-?[0-9]?', metadata.art, imageExt, False]]
     search_tuples += [['theme-?[0-9]?', metadata.themes, audioExt, False]]
