@@ -305,7 +305,7 @@ def FindMediaForItem(metadata, paths, type, part = None):
     search_tuples += [[fileroot + '-?[0-9]?', metadata.thumbs, imageExt, False]]
   elif type == 'movie':
     search_tuples += [['(poster|default|cover|movie|folder|' + fileroot + ')-?[0-9]?', metadata.posters, imageExt, True]]
-    search_tuples += [['(fanart|' + fileroot + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
+    search_tuples += [['(fanart|art|background|' + fileroot + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
 
   for (pattern, media_list, extensions, limited) in search_tuples:
     valid_things = []
