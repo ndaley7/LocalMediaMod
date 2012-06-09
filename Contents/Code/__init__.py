@@ -23,6 +23,18 @@ def SplitPath(str):
   else: 
     return str.split('/')
 
+# Only use unicode if it's supported, which it is on Windows and OS X,
+# but not Linux. This allows things to work with non-ASCII characters
+# without having to go through a bunch of work to ensure the Linux 
+# filesystem is UTF-8 "clean".
+#
+def unicodize(s):
+  filename = s
+  if os.path.supports_unicode_filenames:
+    try: filename = unicode(s.decode('utf-8'))
+    except: pass
+  return filename
+
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
   languages = [Locale.Language.NoLanguage]
@@ -37,12 +49,12 @@ class localMediaMovie(Agent.Movies):
     # Set title if needed.
     if media and metadata.title is None: metadata.title = media.title
 
-    filename = media.items[0].parts[0].file.decode('utf-8')   
+    filename = unicodize(media.items[0].parts[0].file)
     path = os.path.dirname(filename)
     
     # Look for media.
     try: FindMediaForItem(metadata, [path], 'movie', media.items[0].parts[0])
-    except: raise #Log('Error finding media for movie %s', media.title)
+    except: Log('Error finding media for movie %s', media.title)
 
     # Look for subtitles
     for i in media.items:
@@ -88,11 +100,11 @@ class localMediaTV(Agent.TV_Shows):
         # Make sure metadata exists, and find sidecar media.
         episodeMetadata = metadata.seasons[s].episodes[e]
         episodeMedia = media.seasons[s].episodes[e].items[0]
-        dir = os.path.dirname(episodeMedia.parts[0].file.decode('utf-8'))
+        dir = os.path.dirname(unicodize(episodeMedia.parts[0].file))
         dirs[dir] = True
         
         try: FindMediaForItem(episodeMetadata, [dir], 'episode', episodeMedia.parts[0])
-        except: raise
+        except: Log("Error finding season media for episode")
         
     # Figure out the directories we should be looking in.
     try: dirs = FindUniqueSubdirs(dirs)
@@ -157,7 +169,7 @@ class localMediaAlbum(Agent.Album):
     for t in media.tracks:
       for i in media.tracks[t].items:
         for p in i.parts:
-          filename = p.file.decode('utf-8')
+          filename = unicodize(p.file)
           path = os.path.dirname(filename)
           (fileroot, fext) = os.path.splitext(filename)
           pathFiles = {}
@@ -265,7 +277,7 @@ def cleanFilename(filename):
 
 def GetFileRoot(part):
   if part:
-    filename = part.file.decode('utf-8')
+    filename = unicodize(part.file)
     path = os.path.dirname(filename)
     if 'video_ts' == SplitPath(path.lower())[-1]:
       path = '/'.join(SplitPath(path)[:-1])
@@ -284,7 +296,7 @@ def FindMediaForItem(metadata, paths, type, part = None):
     for p in os.listdir(path):
       if os.path.isfile(os.path.join(path, p)):
         path_files[p.lower()] = os.path.join(path, p)
-      (r, n) = os.path.splitext(p.decode('utf-8'))
+      (r, n) = os.path.splitext(p)
       if n.lower()[1:] in video_exts:
         total_media_files += 1
       
@@ -334,7 +346,7 @@ def FindMediaForItem(metadata, paths, type, part = None):
 
 def FindSubtitles(part):
   globalSubtitleFolder = os.path.join(Core.app_support_path, 'Subtitles')
-  pathsToCheck = [part.file.decode('utf-8')] # full pathname
+  pathsToCheck = [unicodize(part.file)] # full pathname
   
   # filename only (no path)
   if os.path.exists(globalSubtitleFolder):
@@ -361,7 +373,7 @@ def FindSubtitles(part):
     # Get all the files in the path.
     pathFiles = {}
     for p in os.listdir(path):
-      (r, n) = os.path.splitext(p.decode('utf-8'))
+      (r, n) = os.path.splitext(unicodize(p))
       pathFiles[p] = cleanFilename(r) + n.lower()
       # Also, check to see if we have only one video filetype in this dir
       if n.lower()[1:] in video_exts:
@@ -453,7 +465,7 @@ def FindSubtitles(part):
     part.subtitles[lang].validate_keys(lang_sub_map[lang])
   
 def getMetadataAtoms(part, metadata, type, episode=None):
-  filename = part.file.decode('utf-8')
+  filename = unicodize(part.file)
   file = os.path.basename(filename)
   (file, ext) = os.path.splitext(file)
   if ext.lower() in ['.mp4', '.m4v', '.mov']:
