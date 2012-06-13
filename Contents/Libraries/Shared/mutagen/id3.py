@@ -60,7 +60,7 @@ class ID3(DictProxy, mutagen.Metadata):
     size -- the total size of the ID3 tag, including the header
     """
 
-    PEDANTIC = True
+    PEDANTIC = False
     version = (2, 4, 0)
 
     filename = None
