@@ -1,5 +1,5 @@
 #local media assets agent
-import os, string, hashlib, base64, re, plistlib, EXIF
+import os, string, hashlib, base64, re, plistlib
 from mutagen.mp4 import MP4
 from mutagen.id3 import ID3
 from mutagen.flac import FLAC
@@ -571,27 +571,3 @@ def getMetadataAtoms(part, metadata, type, episode=None):
         for a in albumList:
           item.collections.add(a.strip())
     except: pass
-    
-class localMediaTV(Agent.Photos):
-  name = 'EXIF Agent (Photos)'
-  languages = [Locale.Language.NoLanguage]
-  primary_provider = True
-
-  def search(self, results, media, lang):
-    results.Append(MetadataSearchResult(id = 'null', score = 100))
-
-  def update(self, metadata, media, lang):
-    file = media.items[0].parts[0].file.decode('utf-8')
-    tags = EXIF.process_file(file, details=False, stop_tag='DateTimeOriginal')
-    if tags == {}: 
-      return #no EXIF tags
-    #Log('tags=' + str(tags['Image DateTime']))
-    EXIFDate = str(tags['Image DateTime']).split(' ')
-    if EXIFDate[0][:4] != '0000': #make sure we didn't get a bogus date back
-      EXIFDate[0] = EXIFDate[0].replace(':','-')
-      try:
-        EXIFDate = Datetime.ParseDate(EXIFDate[0] + ' ' + EXIFDate[1])
-      except:
-        Log('Problem parsing EXIF date.')
-      metadata.originally_available_at = EXIFDate.date()
-      metadata.year = EXIFDate.year
