@@ -5,6 +5,7 @@ from mutagen.id3 import ID3
 from mutagen.flac import FLAC
 from mutagen.flac import Picture
 from mutagen.oggvorbis import OggVorbis
+from wtv import WTV_Metadata
 
 imageExt          = ['jpg', 'png', 'jpeg', 'tbn']
 audioExt          = ['mp3']
@@ -14,7 +15,7 @@ artFiles          = {'posters': ['poster','default','cover','movie','folder'],
 subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','sub','txt', 'psb']
 video_exts        = ['3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 
                      'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 
-                     'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob', 'vp3', 'wmv', 'wpl', 'xsp', 'xvid']
+                     'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid']
               
 # A platform independent way to split paths which might come in with different separators.
 def SplitPath(str):
@@ -87,6 +88,7 @@ class localMediaTV(Agent.TV_Shows):
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
   def update(self, metadata, media, lang):
+    Log('update')
     # Set title if needed.
     if media and metadata.title is None: metadata.title = media.title
 
@@ -96,7 +98,6 @@ class localMediaTV(Agent.TV_Shows):
       Log('Creating season %s', s)
       metadata.seasons[s].index = int(s)
       for e in media.seasons[s].episodes:
-        
         # Make sure metadata exists, and find sidecar media.
         episodeMetadata = metadata.seasons[s].episodes[e]
         episodeMedia = media.seasons[s].episodes[e].items[0]
@@ -314,14 +315,25 @@ def FindMediaForItem(metadata, paths, type, part = None):
     search_tuples += [['(fanart|art|background)-?[0-9]?', metadata.art, imageExt, False]]
     search_tuples += [['theme-?[0-9]?', metadata.themes, audioExt, False]]
   elif type == 'episode':
+    Log('EPISODE!')
     search_tuples += [[re.escape(fileroot) + '-?[0-9]?', metadata.thumbs, imageExt, False]]
+    for p in path_files:
+      if p.lower()[-3:] == 'wtv':
+        for s in metadata.season:
+          Log(s)
+          for e in metadata.season[s].episodes:
+            Log(e)
+        wtv = WTV_Metadata(path_files[p])
+        metadata.title = wtv.getEpisodeTitle()
+        metadata.summary = wtv.getDescription()
+        metadata.content_rating = wtv.getContentRating()
+    
   elif type == 'movie':
     search_tuples += [['(poster|default|cover|movie|folder|' + re.escape(fileroot) + ')-?[0-9]?', metadata.posters, imageExt, True]]
     search_tuples += [['(fanart|art|background|' + re.escape(fileroot) + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
 
   for (pattern, media_list, extensions, limited) in search_tuples:
     valid_things = []
-    
     for p in path_files:
       for ext in extensions:
         if re.match('%s.%s' % (pattern, ext), p, re.IGNORECASE):
