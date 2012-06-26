@@ -1,8 +1,9 @@
-import re
-from datetime import datetime
+import re, os
+import datetime
 
 class WTV_Metadata:
   def __init__(self, filename):
+    self.filename = filename
     f = open(filename,'rb')
     metaHeader = f.read(80000)
     metaHeader = metaHeader[metaHeader.find('\x57\x00\x4D\x00\x2F\x00'):]
@@ -27,7 +28,13 @@ class WTV_Metadata:
     
   def getOriginalBroadcastDateTime(self):
     origDate = self.tagDict['WM/MediaOriginalBroadcastDateTime']
-    return datetime.strptime(origDate.replace('T',' ').replace('Z',''), '%Y-%m-%d %H:%M:%S').date()
+    if origDate[:4] == '0001':
+      # let's use the create date instead of the metadata supplied date
+      mod_time = os.path.getmtime(self.filename)
+      origDate = datetime.date.fromtimestamp(mod_time)
+    else:
+      origDate = datetime.datetime.strptime(origDate.replace('T',' ').replace('Z',''), '%Y-%m-%d %H:%M:%S').date()
+    return origDate
       
   def getOriginalReleaseTime(self):
     return int(self.tagDict['WM/OriginalReleaseTime'])
