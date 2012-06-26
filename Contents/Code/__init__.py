@@ -88,7 +88,6 @@ class localMediaTV(Agent.TV_Shows):
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
   def update(self, metadata, media, lang):
-    Log('update')
     # Set title if needed.
     if media and metadata.title is None: metadata.title = media.title
 
