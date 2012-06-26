@@ -315,14 +315,9 @@ def FindMediaForItem(metadata, paths, type, part = None):
     search_tuples += [['(fanart|art|background)-?[0-9]?', metadata.art, imageExt, False]]
     search_tuples += [['theme-?[0-9]?', metadata.themes, audioExt, False]]
   elif type == 'episode':
-    Log('EPISODE!')
     search_tuples += [[re.escape(fileroot) + '-?[0-9]?', metadata.thumbs, imageExt, False]]
     for p in path_files:
       if p.lower()[-3:] == 'wtv':
-        for s in metadata.season:
-          Log(s)
-          for e in metadata.season[s].episodes:
-            Log(e)
         wtv = WTV_Metadata(path_files[p])
         metadata.title = wtv.getEpisodeTitle()
         metadata.summary = wtv.getDescription()
