@@ -10,7 +10,7 @@ imageExt          = ['jpg', 'png', 'jpeg', 'tbn']
 audioExt          = ['mp3']
 artExt            = ['jpg','jpeg','png','tbn']
 artFiles          = {'posters': ['poster','default','cover','movie','folder'],
-                     'art':     ['fanart','art','background']}        
+                     'art':     ['fanart','art','background','backdrop']}        
 subtitleExt       = ['utf','utf8','utf-8','srt','smi','rt','ssa','aqt','jss','ass','idx','sub','txt', 'psb']
 video_exts        = ['3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 
                      'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 
@@ -309,15 +309,15 @@ def FindMediaForItem(metadata, paths, type, part = None):
     search_tuples += [['season-?%s[-a-z]?' % metadata.index, metadata.posters, imageExt, False]]
     search_tuples += [['season-?%s-banner[-a-z]?' % metadata.index, metadata.banners, imageExt, False]]
   elif type == 'show':
-    search_tuples += [['(show|poster)-?[0-9]?', metadata.posters, imageExt, False]]
+    search_tuples += [['(show|poster|folder)-?[0-9]?', metadata.posters, imageExt, False]]
     search_tuples += [['banner-?[0-9]?', metadata.banners, imageExt, False]]
-    search_tuples += [['(fanart|art|background)-?[0-9]?', metadata.art, imageExt, False]]
+    search_tuples += [['(fanart|art|background|backdrop)-?[0-9]?', metadata.art, imageExt, False]]
     search_tuples += [['theme-?[0-9]?', metadata.themes, audioExt, False]]
   elif type == 'episode':
     search_tuples += [[re.escape(fileroot) + '-?[0-9]?', metadata.thumbs, imageExt, False]]
   elif type == 'movie':
     search_tuples += [['(poster|default|cover|movie|folder|' + re.escape(fileroot) + ')-?[0-9]?', metadata.posters, imageExt, True]]
-    search_tuples += [['(fanart|art|background|' + re.escape(fileroot) + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
+    search_tuples += [['(fanart|art|background|backdrop|' + re.escape(fileroot) + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
 
   for (pattern, media_list, extensions, limited) in search_tuples:
     valid_things = []
