@@ -41,7 +41,7 @@ class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
-  #persist_stored_files = False
+  persist_stored_files = False
   contributes_to = ['com.plexapp.agents.imdb', 'com.plexapp.agents.none']
   
   def search(self, results, media, lang):
@@ -83,7 +83,7 @@ class localMediaTV(Agent.TV_Shows):
   name = 'Local Media Assets (TV)'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
-  #persist_stored_files = False
+  persist_stored_files = False
   contributes_to = ['com.plexapp.agents.thetvdb', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
@@ -143,7 +143,7 @@ class localMediaArtist(Agent.Artist):
   name = 'Local Media Assets (Artists)'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
-  #persist_stored_files = False
+  persist_stored_files = False
   contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
   
   def search(self, results, media, lang):
@@ -157,7 +157,7 @@ class localMediaAlbum(Agent.Album):
   name = 'Local Media Assets (Albums)'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
-  #persist_stored_files = False
+  persist_stored_files = False
   contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
