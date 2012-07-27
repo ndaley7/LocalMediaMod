@@ -6,6 +6,8 @@ from mutagen.flac import FLAC
 from mutagen.flac import Picture
 from mutagen.oggvorbis import OggVorbis
 
+PERSONAL_MEDIA_IDENTIFIER = "com.plexapp.agents.none"
+
 imageExt          = ['jpg', 'png', 'jpeg', 'tbn']
 audioExt          = ['mp3']
 artExt            = ['jpg','jpeg','png','tbn']
@@ -125,7 +127,7 @@ class localMediaTV(Agent.TV_Shows):
     for s in media.seasons:
       # If we've got a date based season, ignore it for now, otherwise it'll collide with S/E folders/XML and PMS
       # prefers date-based (why?)
-      if int(s) < 1900:
+      if int(s) < 1900 or metadata.guid.startswith(PERSONAL_MEDIA_IDENTIFIER):
         for e in media.seasons[s].episodes:
           for i in media.seasons[s].episodes[e].items:
             # Look for subtitles.
