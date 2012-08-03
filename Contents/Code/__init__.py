@@ -471,7 +471,9 @@ def getMetadataAtoms(part, metadata, type, episode=None):
   file = os.path.basename(filename)
   (file, ext) = os.path.splitext(file)
   if ext.lower() in ['.mp4', '.m4v', '.mov']:
-    tags = MP4(filename)
+    Log('Reading MP4 tags')
+    try: tags = MP4(filename)
+    except: return
     
     if type == 'Movie':
       item = metadata
