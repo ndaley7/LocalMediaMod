@@ -1,5 +1,5 @@
 #local media assets agent
-import os, string, hashlib, base64, re, plistlib
+import os, string, hashlib, base64, re, plistlib, unicodedata
 from mutagen.mp4 import MP4
 from mutagen.id3 import ID3
 from mutagen.flac import FLAC
@@ -36,6 +36,14 @@ def unicodize(s):
     try: filename = unicode(s.decode('utf-8'))
     except: pass
   return filename
+  
+def escapeRegex(s):
+  s = s.replace('(','\\(')
+  s = s.replace(')','\\)')
+  s = s.replace('.','\\.')
+  s = s.replace('[','\\[')
+  s = s.replace(']','\\]')
+  return s
 
 class localMediaMovie(Agent.Movies):
   name = 'Local Media Assets (Movies)'
@@ -56,7 +64,9 @@ class localMediaMovie(Agent.Movies):
     
     # Look for media.
     try: FindMediaForItem(metadata, [path], 'movie', media.items[0].parts[0])
-    except: Log('Error finding media for movie %s', media.title)
+    except: 
+      Log('Error finding media for movie %s', media.title)
+      raise
 
     # Look for subtitles
     for i in media.items:
@@ -106,7 +116,9 @@ class localMediaTV(Agent.TV_Shows):
         dirs[dir] = True
         
         try: FindMediaForItem(episodeMetadata, [dir], 'episode', episodeMedia.parts[0])
-        except: Log("Error finding season media for episode")
+        except: 
+          Log("Error finding season media for episode")
+          raise
         
     # Figure out the directories we should be looking in.
     try: dirs = FindUniqueSubdirs(dirs)
@@ -316,18 +328,20 @@ def FindMediaForItem(metadata, paths, type, part = None):
     search_tuples += [['(fanart|art|background|backdrop)-?[0-9]?', metadata.art, imageExt, False]]
     search_tuples += [['theme-?[0-9]?', metadata.themes, audioExt, False]]
   elif type == 'episode':
-    search_tuples += [[re.escape(fileroot) + '-?[0-9]?', metadata.thumbs, imageExt, False]]
+    search_tuples += [[escapeRegex(fileroot) + '-?[0-9]?', metadata.thumbs, imageExt, False]]
   elif type == 'movie':
-    search_tuples += [['(poster|default|cover|movie|folder|' + re.escape(fileroot) + ')-?[0-9]?', metadata.posters, imageExt, True]]
-    search_tuples += [['(fanart|art|background|backdrop|' + re.escape(fileroot) + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
+    search_tuples += [['(poster|default|cover|movie|folder|' + escapeRegex(fileroot) + ')-?[0-9]?', metadata.posters, imageExt, True]]
+    search_tuples += [['(fanart|art|background|backdrop|' + escapeRegex(fileroot) + '-fanart' + ')-?[0-9]?', metadata.art, imageExt, True]]
 
   for (pattern, media_list, extensions, limited) in search_tuples:
     valid_things = []
     
     for p in path_files:
       for ext in extensions:
-        if re.match('%s.%s' % (pattern, ext), p, re.IGNORECASE):
-
+        the_pattern = unicodedata.normalize('NFC', unicode(('%s.%s' % (pattern, ext)).decode('utf-8')))
+        the_path = unicodedata.normalize('NFC', unicode(p.decode('utf-8')))
+        
+        if re.match(the_pattern, the_path, re.IGNORECASE):
           # Use a pattern if it's unlimited, or if there's only one media file.
           if (limited and total_media_files == 1) or (not limited) or (p.find(fileroot.lower()) == 0):
 
@@ -461,7 +475,7 @@ def FindSubtitles(part):
                 
             Log('Found subtitle file: ' + f + ' language: ' + langCheck + ' codec: ' + str(codec))
             lang = Locale.Language.Match(langCheck)
-            part.subtitles[lang][f] = Proxy.LocalFile(os.path.join(path, f), codec=codec, format=format)
+            part.subtitles[lang][f] = Proxy.LocalFile('hello', codec=codec, format=format) # unicodize(os.path.join(path, f)
             if not lang_sub_map.has_key(lang):
               lang_sub_map[lang] = []
             lang_sub_map[lang].append(f)
