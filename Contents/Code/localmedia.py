@@ -26,9 +26,6 @@ def findAssests(metadata, paths, type, part = None):
       if ext.lower()[1:] in config.VIDEO_EXTS:
         total_media_files += 1
 
-  Log("IABI")
-  Log(path_files)
-
   Log('Looking for %s media (%s) in %d paths (root file: %s) with %d media files.', type, metadata.title, len(paths), root_file, total_media_files)
   Log('Paths: %s', ", ".join([ unicode(p) for p in paths ]))
 
