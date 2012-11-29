@@ -118,6 +118,7 @@ class localMediaTV(Agent.TV_Shows):
       if int(s) < 1900 or metadata.guid.startswith(PERSONAL_MEDIA_IDENTIFIER):
         for e in media.seasons[s].episodes:
           for i in media.seasons[s].episodes[e].items:
+
             # Look for subtitles.
             for part in i.parts:
               subtitles.findSubtitles(part)
@@ -165,34 +166,35 @@ class localMediaAlbum(Agent.Album):
     if media and metadata.title is None: metadata.title = media.title
       
     valid_posters = []
-    for t in media.tracks:
-      for i in media.tracks[t].items:
-        for p in i.parts:
-          filename = helpers.unicodize(p.file)
+    for track in media.tracks:
+      for item in media.tracks[track].items:
+        for part in item.parts:
+          filename = helpers.unicodize(part.file)
           path = os.path.dirname(filename)
-          (fileroot, fext) = os.path.splitext(filename)
-          pathFiles = {}
-          for pth in os.listdir(path):
-            pathFiles[pth.lower()] = pth
-          # Add the filename as a base, and the dirname as a base for poster lookups
-          passFiles = {}
-          passFiles['posters'] = config.ART_FILES['posters'] + [fileroot, helpers.splitPath(path)[-1]]
+          (file_root, fext) = os.path.splitext(filename)
+
+          path_files = {}
+          for p in os.listdir(path):
+            path_files[p.lower()] = p
+
           # Look for posters
-          for e in config.ART_EXTS:
-            for a in passFiles['posters']:
-              f = (a + '.' + e).lower()
-              if f in pathFiles.keys():
-                data = Core.storage.load(os.path.join(path, pathFiles[f]))
-                posterName = hashlib.md5(data).hexdigest()
-                valid_posters.append(posterName)
-                if posterName not in metadata.posters:
-                  metadata.posters[posterName] = Proxy.Media(data)
-                  Log('Local asset image added: ' + f + ', for file: ' + filename)
+          poster_files = config.POSTER_FILES + [ os.path.basename(file_root), helpers.splitPath(path)[-1] ]
+          for ext in config.ART_EXTS:
+            for name in poster_files:
+              file = (name + '.' + ext).lower()
+              if file in path_files.keys():
+                data = Core.storage.load(os.path.join(path, path_files[file]))
+                poster_name = hashlib.md5(data).hexdigest()
+                valid_posters.append(poster_name)
+
+                if poster_name not in metadata.posters:
+                  metadata.posters[poster_name] = Proxy.Media(data)
+                  Log('Local asset image added: ' + file + ', for file: ' + filename)
                 else:
-                  Log('skipping add for local art')
+                  Log('Skipping local poster since its already added')
 
           # If there is an appropriate AudioHelper, use it.
-          audio_helper = audiohelpers.AudioHelpers(p.file)
+          audio_helper = audiohelpers.AudioHelpers(part.file)
           if audio_helper != None:
             valid_posters = valid_posters + audio_helper.process_metadata(metadata)
 

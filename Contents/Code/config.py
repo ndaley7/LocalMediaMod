@@ -7,5 +7,5 @@ VIDEO_EXTS        = ['3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'b
                      'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 
                      'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob', 'vp3', 'wmv', 'wpl', 'xsp', 'xvid']
 
-ART_FILES         = {'posters': ['poster','default','cover','movie','folder'],
-                     'art':     ['fanart','art','background','backdrop']}        
+POSTER_FILES      = ['poster','default','cover','movie','folder']
+ART_FILES         = ['fanart','art','background','backdrop']
