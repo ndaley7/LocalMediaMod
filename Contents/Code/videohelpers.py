@@ -34,7 +34,8 @@ class MP4VideoHelper(VideoHelper):
     Log('Reading MP4 tags')
     try: tags = MP4(self.filename)
     except: 
-      Log('An error occurred while attempting to parse the MP4 file')
+      Log('An error occurred while attempting to parse the MP4 file: ' + self.filename)
+      return
 
     # Coverart
     try: 
