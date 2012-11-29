@@ -32,7 +32,7 @@ class MP3AudioHelper(AudioHelper):
     Log("Reading MP3 tags")
     try: tags = ID3(self.filename)
     except: 
-      Log('An error occurred while attempting to parse the MP4 file: ' + filename)
+      Log('An error occurred while attempting to parse the MP4 file: ' + self.filename)
       return
 
     # Release Date
@@ -44,7 +44,7 @@ class MP3AudioHelper(AudioHelper):
 
     # Genres
     try:
-      genres = f.getall('TCON')
+      genres = tags.getall('TCON')
       metadata.genres.clear()
       for genre in genres:
         metadata.genres.add(genre)
@@ -53,7 +53,7 @@ class MP3AudioHelper(AudioHelper):
 
     # Posters
     valid_posters = []
-    for frame in f.getall("APIC"):
+    for frame in tags.getall("APIC"):
       if (frame.mime == 'image/jpeg') or (frame.mime == 'image/jpg'): ext = 'jpg'
       elif frame.mime == 'image/png': ext = 'png'
       elif frame.mime == 'image/gif': ext = 'gif'
@@ -62,8 +62,8 @@ class MP3AudioHelper(AudioHelper):
       poster_name = hashlib.md5(frame.data).hexdigest()
       valid_posters.append(poster_name)
       if poster_name not in metadata.posters:
-        Log('Adding embedded APIC art from mp3 file: ' + filename)
-        metadata.posters[posterName] = Proxy.Media(frame.data, ext = ext)
+        Log('Adding embedded APIC art from mp3 file: ' + self.filename)
+        metadata.posters[poster_name] = Proxy.Media(frame.data, ext = ext)
       else:
         Log('Skipping APIC art since its already added')
 
@@ -81,7 +81,7 @@ class MP4AudioHelper(AudioHelper):
     Log('Reading MP4 tags')
     try: tags = MP4(self.filename)
     except: 
-      Log('An error occurred while attempting to parse the MP4 file: ' + filename)
+      Log('An error occurred while attempting to parse the MP4 file: ' + self.filename)
       return
 
     # Genres
@@ -109,8 +109,8 @@ class MP4AudioHelper(AudioHelper):
       poster_name = hashlib.md5(data).hexdigest()
       valid_posters.append(poster_name)
       if poster_name not in metadata.posters:
-        Log('Adding embedded coverart from m4a/mp4 file: ' + filename)
-        metadata.posters[posterName] = Proxy.Media(data)
+        Log('Adding embedded coverart from m4a/mp4 file: ' + self.filename)
+        metadata.posters[poster_name] = Proxy.Media(data)
       else:
         Log('Skipping coverart since its already added')
     except: pass
@@ -129,7 +129,7 @@ class FLACAudioHelper(AudioHelper):
     Log('Reading FLAC tags')
     try: tags = FLAC(self.filename)
     except:
-      Log('An error occurred while attempting to parse the FLAC file: ' + filename)
+      Log('An error occurred while attempting to parse the FLAC file: ' + self.filename)
       return
 
     # Posters
@@ -138,7 +138,7 @@ class FLACAudioHelper(AudioHelper):
       poster_name = hashlib.md5(poster.data).hexdigest()
       valid_posters.append(poster_name)
       if poster_name not in metadata.posters:
-        Log('Adding embedded art from FLAC file: ' + filename)
+        Log('Adding embedded art from FLAC file: ' + self.filename)
         metadata.posters[posterName] = Proxy.Media(poster.data)
       else:
         Log('Skipping embedded art since its already added')
@@ -157,7 +157,7 @@ class OGGAudioHelper(AudioHelper):
     Log('Reading OGG tags')
     try: tags = OggVorbis(self.filename)
     except:
-      Log('An error occured while attempting to parse the OGG file: ' + filename)
+      Log('An error occured while attempting to parse the OGG file: ' + self.filename)
 
     # Posters
     valid_posters = []
@@ -173,7 +173,7 @@ class OGGAudioHelper(AudioHelper):
         poster_name = hashlib.md5(picture.data).hexdigest()
         valid_posters.append(valid_posters)
         if poster_name not in metadata.posters:
-          Log('Adding embedded art from OGG file: ' + filename)
+          Log('Adding embedded art from OGG file: ' + self.filename)
           metadata.posters[posterName] = Proxy.Media(picture.data, ext = ext)
         else:
           Log('Skipping embedded art since its already added')
