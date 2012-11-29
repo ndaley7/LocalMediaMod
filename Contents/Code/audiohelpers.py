@@ -135,7 +135,7 @@ class FLACAudioHelper(AudioHelper):
     # Posters
     valid_posters = []
     for poster in tags.pictures:
-      poster_name = hashlib.md5(p.data).hexdigest()
+      poster_name = hashlib.md5(poster.data).hexdigest()
       valid_posters.append(poster_name)
       if poster_name not in metadata.posters:
         Log('Adding embedded art from FLAC file: ' + filename)
