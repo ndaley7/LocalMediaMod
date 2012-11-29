@@ -84,6 +84,24 @@ class MP4AudioHelper(AudioHelper):
       Log('An error occurred while attempting to parse the MP4 file: ' + filename)
       return
 
+    # Genres
+    try:
+      genres = tags["\xa9gen"][0]
+      if len(genres) > 0:
+        genre_list = genres.split('/')
+        metadata.genres.clear()
+        for genre in genre_list:
+          metadata.genres.add(genre.strip())
+    except: pass
+
+    # Release Date
+    try:
+      release_date = tags["\xa9day"][0]
+      release_date = release_date.split('T')[0]
+      parsed_date = Datetime.ParseDate(release_date)
+      metadata.originally_available_at = parsed_date.date()
+    except: pass
+
     # Posters
     valid_posters = []
     try:
