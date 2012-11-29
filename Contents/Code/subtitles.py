@@ -2,21 +2,16 @@ import config
 import helpers
 
 def findSubtitles(part):
-  globalSubtitleFolder = os.path.join(Core.app_support_path, 'Subtitles')
-  pathsToCheck = [helpers.unicodize(part.file)] # full pathname
-  
-  # filename only (no path)
-  if os.path.exists(globalSubtitleFolder):
-    pathsToCheck.append(os.path.join(globalSubtitleFolder, os.path.basename(pathsToCheck[0])))
+
+  path_list = [ helpers.unicodize(part.file) ]
+
+  # Chceck for a global subtitle location
+  global_subtitle_folder = os.path.join(Core.app_support_path, 'Subtitles')
+  if os.path.exists(global_subtitle_folder):
+    path_list.append(os.path.join(global_subtitle_folder, os.path.basename(path_list[0])))
+
   lang_sub_map = {}
-  
-  for filename in pathsToCheck:
-    
-    # See if we're in the global folder.
-    if filename.count(globalSubtitleFolder) > 0: 
-      globalFolder = True
-    else: 
-      globalFolder = False
+  for filename in path_list:
       
     basename = os.path.basename(filename)
     (fileroot, ext) = os.path.splitext(basename)
@@ -54,8 +49,8 @@ def findSubtitles(part):
       format = None
       (froot, fext) = pathFiles[f].split('.')
       
-      # we are looking in the global subtitle folder, so the filenames need to match
-      if globalFolder and froot != helpers.cleanFilename(fileroot): 
+      # If we are looking in the global subtitle folder, we only accept filenames which match.
+      if filename.count(global_subtitle_folder) and froot != helpers.cleanFilename(fileroot): 
         continue
 
       if f[0] != '.' and fext in config.SUBTITLE_EXTS:
