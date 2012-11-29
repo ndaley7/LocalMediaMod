@@ -119,7 +119,7 @@ class MP4VideoHelper(VideoHelper):
     try:
       rating = tags["----:com.apple.iTunes:iTunEXTC"][0].split('|')[1]
       if len(rating) > 0:
-        episode.content_rating = rating
+        item.content_rating = rating
     except: pass
 
     # Studio
