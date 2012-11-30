@@ -158,6 +158,7 @@ class OGGAudioHelper(AudioHelper):
     try: tags = OggVorbis(self.filename)
     except:
       Log('An error occured while attempting to parse the OGG file: ' + self.filename)
+      return
 
     # Posters
     valid_posters = []
