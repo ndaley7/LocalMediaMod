@@ -1,6 +1,9 @@
 import os, unicodedata
 import config
 import helpers
+import subtitlehelpers
+
+#####################################################################################################################
 
 def findAssests(metadata, paths, type, part = None):
   root_file = getRootFile(helpers.unicodize(part.file)) if part else None
@@ -80,3 +83,72 @@ def getRootFile(filename):
   basename = os.path.basename(filename)
   (root_file, ext) = os.path.splitext(basename)
   return root_file
+
+#####################################################################################################################
+
+def findSubtitles(part):
+
+  lang_sub_map = {}
+  part_filename = helpers.unicodize(part.file)
+  part_basename = os.path.splitext(os.path.basename(part_filename))[0]
+  paths = [ os.path.dirname(part_filename) ]
+
+  # Check for a global subtitle location
+  global_subtitle_folder = os.path.join(Core.app_support_path, 'Subtitles')
+  if os.path.exists(global_subtitle_folder):
+    paths.append(global_subtitle_folder)
+
+  # We start by building a dictionary of files to their absolute paths. We also need to know
+  # the number of media files that are actually present, in case the found local media asset 
+  # is limited to a single instance per media file.
+  file_paths = {}
+  total_media_files = 0
+  for path in paths:
+    path = helpers.unicodize(path)
+    for file_path_listing in os.listdir(path):
+
+      # When using os.listdir with a unicode path, it will always return a string using the
+      # NFD form. However, we internally are using the form NFC and therefore need to convert
+      # it to allow correct regex / comparisons to be performed.
+      file_path_listing = unicodedata.normalize('NFC', file_path_listing)
+      if os.path.isfile(os.path.join(path, file_path_listing)):
+        file_paths[file_path_listing.lower()] = os.path.join(path, file_path_listing)
+
+      # If we've found an actual media file, we should record it.
+      (root, ext) = os.path.splitext(file_path_listing)
+      if ext.lower()[1:] in config.VIDEO_EXTS:
+        total_media_files += 1
+
+  Log('Looking for subtitle media in %d paths with %d media files.', len(paths), total_media_files)
+  Log('Paths: %s', ", ".join([ unicode(p) for p in paths ]))
+
+  for file_path in file_paths.values():
+
+    local_basename = os.path.splitext(os.path.basename(file_path))[0]
+    local_basename2 = local_basename.rsplit('.')
+    filename_matches_part = local_basename == part_basename or local_basename2 == part_basename
+
+    # If the file is located within the global subtitle folder and it's name doesn't match exactly
+    # then we should simply ignore it.
+    if file_path.count(global_subtitle_folder) and not filename_matches_part:
+      continue
+
+    # If we have more than one media file within the folder and located filename doesn't match 
+    # exactly then we should simply ignore it
+    if total_media_files > 1 and not filename_matches_part:
+      continue
+
+    subtitle_helper = subtitlehelpers.SubtitleHelpers(file_path)
+    if subtitle_helper != None:
+      local_lang_map = subtitle_helper.process_subtitles(part)
+      for new_language, subtitles in local_lang_map.items():
+
+        # Add the possible new language along with the located subtitles so that we can validate them
+        # at the end...
+        if not lang_sub_map.has_key(new_language):
+          lang_sub_map[new_language] = []
+        lang_sub_map[new_language] = lang_sub_map[new_language] + subtitles
+
+  # Now whack subtitles that don't exist anymore.
+  for language in lang_sub_map.keys():
+    part.subtitles[language].validate_keys(lang_sub_map[language])

@@ -5,7 +5,6 @@ import helpers
 import localmedia
 import audiohelpers
 import videohelpers
-import subtitles
 
 from mutagen.mp4 import MP4
 from mutagen.id3 import ID3
@@ -42,7 +41,7 @@ class localMediaMovie(Agent.Movies):
     # Look for subtitles
     for item in media.items:
       for part in item.parts:
-        subtitles.findSubtitles(part)
+        localmedia.findSubtitles(part)
 
     # If there is an appropriate VideoHelper, use it.
     video_helper = videohelpers.VideoHelpers(part.file)
@@ -94,7 +93,8 @@ class localMediaTV(Agent.TV_Shows):
         dirs[dir] = True
         
         try: localmedia.findAssests(episodeMetadata, [dir], 'episode', episodeMedia.parts[0])
-        except: Log("Error finding season media for episode")
+        #except: Log("Error finding season media for episode")
+        except: raise
         
     # Figure out the directories we should be looking in.
     try: dirs = FindUniqueSubdirs(dirs)
@@ -109,7 +109,8 @@ class localMediaTV(Agent.TV_Shows):
     for s in metadata.seasons:
       Log('Looking for season media for %s season %s.', metadata.title, s)
       try: localmedia.findAssests(metadata.seasons[s], dirs, 'season')
-      except: Log("Error finding season media for season %s" % s)
+      #except: Log("Error finding season media for season %s" % s)
+      except: raise
         
     # Look for subtitles for each episode.
     for s in media.seasons:
@@ -121,7 +122,7 @@ class localMediaTV(Agent.TV_Shows):
 
             # Look for subtitles.
             for part in i.parts:
-              subtitles.findSubtitles(part)
+              localmedia.findSubtitles(part)
 
               # If there is an appropriate VideoHelper, use it.
               video_helper = videohelpers.VideoHelpers(part.file)
