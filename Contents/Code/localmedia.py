@@ -48,7 +48,9 @@ def findAssests(metadata, paths, type, part = None):
   for (pattern, media_list, extensions, limited) in search_tuples:
     valid_keys = []
     
-    for file_path in path_files:
+    sort_index = 1
+    file_path_keys = sorted(path_files.keys(), key = lambda x: os.path.splitext(x)[0])
+    for file_path in file_path_keys:
       for ext in extensions:
         if re.match('%s.%s' % (pattern, ext), file_path, re.IGNORECASE):
 
@@ -62,7 +64,8 @@ def findAssests(metadata, paths, type, part = None):
             # See if we need to add it.
             valid_keys.append(media_hash)
             if media_hash not in media_list:
-              media_list[media_hash] = Proxy.Media(data)
+              media_list[media_hash] = Proxy.Media(data, sort_order = sort_index)
+              sort_index = sort_index + 1
               Log('  Local asset added: %s (%s)', path_files[file_path], media_hash)
           else:
             Log('Skipping file %s because there are %d media files.', file_path, total_media_files)
