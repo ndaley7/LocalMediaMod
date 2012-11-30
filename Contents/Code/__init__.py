@@ -93,8 +93,7 @@ class localMediaTV(Agent.TV_Shows):
         dirs[dir] = True
         
         try: localmedia.findAssests(episodeMetadata, [dir], 'episode', episodeMedia.parts[0])
-        #except: Log("Error finding season media for episode")
-        except: raise
+        except: Log("Error finding season media for episode")
         
     # Figure out the directories we should be looking in.
     try: dirs = FindUniqueSubdirs(dirs)
@@ -109,8 +108,7 @@ class localMediaTV(Agent.TV_Shows):
     for s in metadata.seasons:
       Log('Looking for season media for %s season %s.', metadata.title, s)
       try: localmedia.findAssests(metadata.seasons[s], dirs, 'season')
-      #except: Log("Error finding season media for season %s" % s)
-      except: raise
+      except: Log("Error finding season media for season %s" % s)
         
     # Look for subtitles for each episode.
     for s in media.seasons:
