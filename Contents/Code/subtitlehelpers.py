@@ -84,13 +84,11 @@ class DefaultSubtitleHelper(SubtitleHelper):
     basename = os.path.basename(self.filename)
     (file, ext) = os.path.splitext(self.filename)
 
-    # Check to see if the file includes a language (e.g. Avatar (2009).eng)
+    # Attempt to extract the language from the filename (e.g. Avatar (2009).eng)
+    language = ""
     language_match = re.match(".+\.([^\.]+)$", file)
-    if not language_match or len(language_match.groups()) != 1:
-      Log("The subtitle file does not have a known language, skipping... : " + self.filename)
-      return lang_sub_map
-
-    language = language_match.groups()[0]
+    if language_match and len(language_match.groups()) == 1:
+      language = language_match.groups()[0]
     language = Locale.Language.Match(language)
 
     codec = None
