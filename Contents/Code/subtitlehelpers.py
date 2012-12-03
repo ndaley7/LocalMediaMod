@@ -27,7 +27,7 @@ class VobSubSubtitleHelper(SubtitleHelper):
     # If we've been given a sub, we only support it if there exists a matching idx file
     return os.path.exists(file + '.idx')
 
-  def process_subtitles(part):
+  def process_subtitles(self, part):
 
     lang_sub_map = {}
 
@@ -51,7 +51,7 @@ class VobSubSubtitleHelper(SubtitleHelper):
     languages = {}
     language_index = 0
     basename = os.path.basename(self.filename)
-    for language in re.findall('\nid: ([A-Za-z]{2})'):
+    for language in re.findall('\nid: ([A-Za-z]{2})', idx):
 
       if not languages.has_key(language):
         languages[language] = []
