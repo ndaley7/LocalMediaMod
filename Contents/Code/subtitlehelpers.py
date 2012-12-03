@@ -117,7 +117,7 @@ class DefaultSubtitleHelper(SubtitleHelper):
     if format is None:
       format = codec
 
-    Log('Found subtitle file: ' + self.filename + ' language: ' + language + ' codec: ' + str(codec))
+    Log('Found subtitle file: ' + self.filename + ' language: ' + language + ' codec: ' + str(codec) + ' format: ' + str(format))
     part.subtitles[language][basename] = Proxy.LocalFile(self.filename, codec = codec, format = format)
 
     lang_sub_map[language] = [ basename ]
