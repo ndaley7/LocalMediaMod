@@ -46,7 +46,7 @@ class MP4VideoHelper(VideoHelper):
         item.thumbs['atom_coverart'] = picture
       else:
         item.posters['atom_coverart'] = picture
-    except: raise
+    except: pass
 
     # Title
     try:
