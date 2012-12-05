@@ -139,7 +139,7 @@ class FLACAudioHelper(AudioHelper):
       valid_posters.append(poster_name)
       if poster_name not in metadata.posters:
         Log('Adding embedded art from FLAC file: ' + self.filename)
-        metadata.posters[posterName] = Proxy.Media(poster.data)
+        metadata.posters[poster_name] = Proxy.Media(poster.data)
       else:
         Log('Skipping embedded art since its already added')
 
@@ -162,20 +162,14 @@ class OGGAudioHelper(AudioHelper):
 
     # Posters
     valid_posters = []
-    if tags.has_key('metadata_block_picture'):
-      for picture_data in tags['metadata_block_picture']:
-        picture = Picture(base64.standard_b64decode(picture_data))
-
-        if (picture.mime == 'image/jpeg') or (picture.mime == 'image/jpg'): ext = 'jpg'
-        elif picture.mime == 'image/png': ext = 'png'
-        elif picture.mime == 'image/gif': ext = 'gif'
-        else: ext = ''
-
-        poster_name = hashlib.md5(picture.data).hexdigest()
-        valid_posters.append(valid_posters)
+    if tags.has_key('coverart'):
+      for poster in tags['coverart']:
+        poster_data = base64.standard_b64decode(poster)
+        poster_name = hashlib.md5(poster_data).hexdigest()
+        valid_posters.append(poster_name)
         if poster_name not in metadata.posters:
           Log('Adding embedded art from OGG file: ' + self.filename)
-          metadata.posters[posterName] = Proxy.Media(picture.data, ext = ext)
+          metadata.posters[poster_name] = Proxy.Media(poster_data)
         else:
           Log('Skipping embedded art since its already added')
 
