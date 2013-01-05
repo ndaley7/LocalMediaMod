@@ -24,9 +24,9 @@ def findAssests(metadata, paths, type, part = None):
       if os.path.isfile(os.path.join(path, file_path)):
         path_files[file_path.lower()] = os.path.join(path, file_path)
 
-      # If we've found an actual media file, we should record it.
+      # If we've found an actual media file (not a trailer), we should record it.
       (root, ext) = os.path.splitext(file_path)
-      if ext.lower()[1:] in config.VIDEO_EXTS:
+      if ext.lower()[1:] in config.VIDEO_EXTS and root.endswith('-trailer') == False:
         total_media_files += 1
 
   Log('Looking for %s media (%s) in %d paths (root file: %s) with %d media files.', type, metadata.title, len(paths), root_file, total_media_files)
