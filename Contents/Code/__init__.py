@@ -317,10 +317,20 @@ def FindMediaForItem(metadata, paths, type, part = None):
     search_tuples += [[re.escape(fileroot) + '-?[0-9]?', metadata.thumbs, imageExt, False]]
     for p in path_files:
       if p.lower()[-3:] == 'wtv':
+        Log('************wtv!')
+        Log(p)
         wtv = WTV_Metadata(path_files[p])
         metadata.title = wtv.getEpisodeTitle()
+        try:
+          if metatdata.title  != '':
+            pass
+        except:
+          metadata.title = '-'
         metadata.summary = wtv.getDescription()
         metadata.content_rating = wtv.getContentRating()
+        Log(metadata.title)
+        Log(metadata.summary)
+        Log(metadata.content_rating)
     
   elif type == 'movie':
     search_tuples += [['(poster|default|cover|movie|folder|' + re.escape(fileroot) + ')-?[0-9]?', metadata.posters, imageExt, True]]
