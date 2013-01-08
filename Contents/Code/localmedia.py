@@ -43,7 +43,7 @@ def findAssests(metadata, paths, type, part = None):
     search_tuples += [['(fanart|art|background|backdrop)-?[0-9]?', metadata.art, config.IMAGE_EXTS, False]]
     search_tuples += [['theme-?[0-9]?', metadata.themes, config.AUDIO_EXTS, False]]
   elif type == 'episode':
-    search_tuples += [[re.escape(root_file) + '-?[0-9]?', metadata.thumbs, config.IMAGE_EXTS, False]]
+    search_tuples += [[re.escape(root_file) + '(-|-thumb)?[0-9]?', metadata.thumbs, config.IMAGE_EXTS, False]]
   elif type == 'movie':
     search_tuples += [['(poster|default|cover|movie|folder|' + re.escape(root_file) + ')-?[0-9]?', metadata.posters, config.IMAGE_EXTS, True]]
     search_tuples += [['(fanart|art|background|backdrop|' + re.escape(root_file) + '-fanart' + ')-?[0-9]?', metadata.art, config.IMAGE_EXTS, True]]
