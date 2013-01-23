@@ -84,6 +84,9 @@ class DefaultSubtitleHelper(SubtitleHelper):
     basename = os.path.basename(self.filename)
     (file, ext) = os.path.splitext(self.filename)
 
+    # Remove the initial '.' from the extension
+    ext = ext[1:]
+
     # Attempt to extract the language from the filename (e.g. Avatar (2009).eng)
     language = ""
     language_match = re.match(".+\.([^\.]+)$", file)
@@ -93,7 +96,7 @@ class DefaultSubtitleHelper(SubtitleHelper):
 
     codec = None
     format = None
-    if ext in ['.txt', '.sub']:
+    if ext in ['txt', 'sub']:
       try:
 
         file_contents = Core.storage.load(self.filename)
