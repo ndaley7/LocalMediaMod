@@ -35,8 +35,11 @@ def findAssests(metadata, paths, type, part = None):
   # Figure out what regexs to use.
   search_tuples = []
   if type == 'season':
-    search_tuples += [['season-?%s[-a-z]?' % metadata.index, metadata.posters, config.IMAGE_EXTS, False]]
-    search_tuples += [['season-?%s-banner[-a-z]?' % metadata.index, metadata.banners, config.IMAGE_EXTS, False]]
+    search_tuples += [['season(-|0|\s)?%s[-a-z]?(-poster)?' % metadata.index, metadata.posters, config.IMAGE_EXTS, False]]
+    search_tuples += [['season(-|0|\s)?%s-banner[-a-z]?' % metadata.index, metadata.banners, config.IMAGE_EXTS, False]]
+    if int(metadata.index) == 0: # Season zero, also look for Frodo-compliant 'specials' artwork.
+      search_tuples += [['season-specials-poster', metadata.posters, config.IMAGE_EXTS, False]]
+      search_tuples += [['season-specials-banner', metadata.banners, config.IMAGE_EXTS, False]]
   elif type == 'show':
     search_tuples += [['(show|poster|folder)-?[0-9]?', metadata.posters, config.IMAGE_EXTS, False]]
     search_tuples += [['banner-?[0-9]?', metadata.banners, config.IMAGE_EXTS, False]]

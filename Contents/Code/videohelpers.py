@@ -67,7 +67,12 @@ class MP4VideoHelper(VideoHelper):
     try:
       genres = tags["\xa9gen"][0]
       if len(genres) > 0:
-        genre_list = genres.split('/')
+        if ':' in genres:
+          genre_list = genres.split(':')
+        elif ',' in genres:
+          genre_list = genres.split(',')
+        else:
+          genre_list = genres.split('/')
         metadata.genres.clear()
         for genre in genre_list:
           metadata.genres.add(genre.strip())
