@@ -155,3 +155,7 @@ def findSubtitles(part):
   # Now whack subtitles that don't exist anymore.
   for language in lang_sub_map.keys():
     part.subtitles[language].validate_keys(lang_sub_map[language])
+    
+  # Now whack the languages that don't exist anymore.
+  for language in list(set(part.subtitles.keys()) - set(lang_sub_map.keys())):
+    part.subtitles[language].validate_keys({})
