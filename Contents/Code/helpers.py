@@ -8,8 +8,11 @@ def splitPath(str):
 
 def unicodize(s):
   filename = s
-  try: filename = unicode(s.decode('utf-8'))
-  except: pass
+  try: 
+    filename = unicode(s.decode('utf-8'))
+  except: 
+    Log('Failed to unicodize: ' + filename)
+    pass
   return filename
 
 def cleanFilename(filename):

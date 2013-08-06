@@ -20,7 +20,9 @@ def findAssests(metadata, paths, type, part = None):
       # When using os.listdir with a unicode path, it will always return a string using the
       # NFD form. However, we internally are using the form NFC and therefore need to convert
       # it to allow correct regex / comparisons to be performed.
-      file_path = unicodedata.normalize('NFC', file_path)
+      file_path = helpers.unicodize(file_path)
+      if isinstance(file_path, unicode):
+        file_path = unicodedata.normalize('NFC', file_path)
       if os.path.isfile(os.path.join(path, file_path)):
         path_files[file_path.lower()] = os.path.join(path, file_path)
 
@@ -30,7 +32,7 @@ def findAssests(metadata, paths, type, part = None):
         total_media_files += 1
 
   Log('Looking for %s media (%s) in %d paths (root file: %s) with %d media files.', type, metadata.title, len(paths), root_file, total_media_files)
-  Log('Paths: %s', ", ".join([ unicode(p) for p in paths ]))
+  Log('Paths: %s', ", ".join([ helpers.unicodize(p) for p in paths ]))
 
   # Figure out what regexs to use.
   search_tuples = []
@@ -113,7 +115,9 @@ def findSubtitles(part):
       # When using os.listdir with a unicode path, it will always return a string using the
       # NFD form. However, we internally are using the form NFC and therefore need to convert
       # it to allow correct regex / comparisons to be performed.
-      file_path_listing = unicodedata.normalize('NFC', file_path_listing)
+      file_path_listing = helpers.unicodize(file_path_listing)
+      if isinstance(file_path_listing, unicode):
+        file_path_listing = unicodedata.normalize('NFC', file_path_listing)
       if os.path.isfile(os.path.join(path, file_path_listing)):
         file_paths[file_path_listing.lower()] = os.path.join(path, file_path_listing)
 
@@ -123,7 +127,7 @@ def findSubtitles(part):
         total_media_files += 1
 
   Log('Looking for subtitle media in %d paths with %d media files.', len(paths), total_media_files)
-  Log('Paths: %s', ", ".join([ unicode(p) for p in paths ]))
+  Log('Paths: %s', ", ".join([ helpers.unicodize(p) for p in paths ]))
 
   for file_path in file_paths.values():
 
