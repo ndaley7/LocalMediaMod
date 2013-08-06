@@ -20,10 +20,7 @@ def findAssests(metadata, paths, type, part = None):
       # When using os.listdir with a unicode path, it will always return a string using the
       # NFD form. However, we internally are using the form NFC and therefore need to convert
       # it to allow correct regex / comparisons to be performed.
-      file_path = helpers.unicodize(file_path)
-      if isinstance(file_path, unicode):
-        file_path = unicodedata.normalize('NFC', file_path)
-      if os.path.isfile(os.path.join(path, file_path)):
+      if os.path.isfile(os.path.join(path, helpers.unicodize(file_path))):
         path_files[file_path.lower()] = os.path.join(path, file_path)
 
       # If we've found an actual media file (not a trailer), we should record it.
@@ -115,10 +112,7 @@ def findSubtitles(part):
       # When using os.listdir with a unicode path, it will always return a string using the
       # NFD form. However, we internally are using the form NFC and therefore need to convert
       # it to allow correct regex / comparisons to be performed.
-      file_path_listing = helpers.unicodize(file_path_listing)
-      if isinstance(file_path_listing, unicode):
-        file_path_listing = unicodedata.normalize('NFC', file_path_listing)
-      if os.path.isfile(os.path.join(path, file_path_listing)):
+      if os.path.isfile(os.path.join(path, helpers.unicodize(file_path_listing))):
         file_paths[file_path_listing.lower()] = os.path.join(path, file_path_listing)
 
       # If we've found an actual media file, we should record it.
