@@ -1,3 +1,4 @@
+import unicodedata
 
 # A platform independent way to split paths which might come in with different separators.
 def splitPath(str):
@@ -8,8 +9,11 @@ def splitPath(str):
 
 def unicodize(s):
   filename = s
-  try: filename = unicode(s.decode('utf-8'))
-  except: pass
+  try: 
+    filename = unicodedata.normalize('NFC', unicode(s.decode('utf-8')))
+  except: 
+    Log('Failed to unicodize: ' + filename)
+    pass
   return filename
 
 def cleanFilename(filename):
