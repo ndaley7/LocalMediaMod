@@ -65,7 +65,10 @@ class MP4VideoHelper(VideoHelper):
 
     # Genres
     try:
-      genres = tags["\xa9gen"][0]
+      if "\xa9gen" in tags:
+        genres = tags["\xa9gen"][0]
+      else:
+        genres = tags["gnre"][0]
       if len(genres) > 0:
         if ':' in genres:
           genre_list = genres.split(':')
@@ -78,17 +81,6 @@ class MP4VideoHelper(VideoHelper):
           metadata.genres.add(genre.strip())
     except: pass
 
-    # Roles
-    try: 
-      artists = tags["\xa9ART"][0]
-      if len(artists) > 0:
-        artist_list = artists.split(',')
-        item.roles.clear()
-        for artist in artist_list:
-          role = item.roles.new()
-          role.actor = artist.strip()
-    except: pass
-
     # Release Date & Year
     try:
       releaseDate = tags["\xa9day"][0]
@@ -98,28 +90,6 @@ class MP4VideoHelper(VideoHelper):
       item.year = parsedDate.year
     except: pass
 
-    # Directors
-    try:
-      pl = plistlib.readPlistFromString(str(tags["----:com.apple.iTunes:iTunMOVI"][0]))
-      directors = pl["directors"][0]["name"]
-      if len(directors) > 0:
-        director_list = directors.split("/")
-        item.directors.clear()
-        for director in director_list:
-          item.directors.add(director.strip())
-    except: pass
-
-    # Writers
-    try:
-      pl = plistlib.readPlistFromString(str(tags["----:com.apple.iTunes:iTunMOVI"][0]))
-      writers = pl["screenwriters"][0]["name"]
-      if len(directors) > 0:
-        writer_list = writers.split("/")
-        item.writers.clear()
-        for writer in writer_list:
-          item.writers.add(writer.strip())
-    except: pass
-
     # Content Rating
     try:
       rating = tags["----:com.apple.iTunes:iTunEXTC"][0].split('|')[1]
@@ -127,11 +97,52 @@ class MP4VideoHelper(VideoHelper):
         item.content_rating = rating
     except: pass
 
+    # Look for iTunes-style metadata, use regular tags otherwise
+    try:
+      pl = plistlib.readPlistFromString(str(tags["----:com.apple.iTunes:iTunMOVI"][0]))
+    except:
+      pl = None
+
+    # Directors
+    if pl and 'directors' in pl and pl['directors']:
+      item.directors.clear()
+      for director in pl['directors']:
+        item.directors.add(director['name'])
+
+    # Writers
+    if pl and 'screenwriters' in pl and pl['screenwriters']:
+      item.writers.clear()
+      for writer in pl['screenwriters']:
+        item.writers.add(writer['name'])
+
+    # Cast
+    if pl and 'cast' in pl and pl['cast']:
+      item.roles.clear()
+      for actor in pl['cast']:
+        role = item.roles.new()
+        role.actor = actor['name']
+    else:
+      try: 
+        artists = tags["\xa9ART"][0]
+        if len(artists) > 0:
+          artist_list = artists.split(',')
+          item.roles.clear()
+          for artist in artist_list:
+            role = item.roles.new()
+            role.actor = artist.strip()
+      except: pass
+  
     # Studio
     try:
-      copyright = tags["cprt"][0]
-      if len(copyright) > 0:
-        item.studio = copyright
+      if pl and 'studio' in pl and pl['studio']:
+        Log('adding studio: ' + pl['studio'])
+        item.studio = pl['studio']
+      else:
+        try:
+          copyright = tags["cprt"][0]
+          if len(copyright) > 0:
+            item.studio = copyright
+        except: pass
     except: pass
 
     # Collection
