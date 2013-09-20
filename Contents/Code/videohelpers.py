@@ -104,25 +104,29 @@ class MP4VideoHelper(VideoHelper):
       pl = None
 
     # Directors
-    if pl and 'directors' in pl and pl['directors']:
-      item.directors.clear()
-      for director in pl['directors']:
-        item.directors.add(director['name'])
+    try:
+      if pl and 'directors' in pl and pl['directors']:
+        item.directors.clear()
+        for director in pl['directors']:
+          item.directors.add(director['name'])
+    except: pass
 
     # Writers
-    if pl and 'screenwriters' in pl and pl['screenwriters']:
-      item.writers.clear()
-      for writer in pl['screenwriters']:
-        item.writers.add(writer['name'])
+    try:
+      if pl and 'screenwriters' in pl and pl['screenwriters']:
+        item.writers.clear()
+        for writer in pl['screenwriters']:
+          item.writers.add(writer['name'])
+    except: pass
 
     # Cast
-    if pl and 'cast' in pl and pl['cast']:
-      item.roles.clear()
-      for actor in pl['cast']:
-        role = item.roles.new()
-        role.actor = actor['name']
-    else:
-      try: 
+    try:
+      if pl and 'cast' in pl and pl['cast']:
+        item.roles.clear()
+        for actor in pl['cast']:
+          role = item.roles.new()
+          role.actor = actor['name']
+      else:
         artists = tags["\xa9ART"][0]
         if len(artists) > 0:
           artist_list = artists.split(',')
@@ -130,12 +134,11 @@ class MP4VideoHelper(VideoHelper):
           for artist in artist_list:
             role = item.roles.new()
             role.actor = artist.strip()
-      except: pass
+    except: pass
   
     # Studio
     try:
       if pl and 'studio' in pl and pl['studio']:
-        Log('adding studio: ' + pl['studio'])
         item.studio = pl['studio']
       else:
         try:
