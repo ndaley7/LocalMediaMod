@@ -127,7 +127,7 @@ def findSubtitles(part):
 
   for file_path in file_paths.values():
 
-    local_basename = os.path.splitext(os.path.basename(file_path))[0]
+    local_basename = helpers.unicodize(os.path.splitext(os.path.basename(file_path))[0])
     local_basename2 = local_basename.rsplit('.', 1)[0]
     filename_matches_part = local_basename == part_basename or local_basename2 == part_basename
 
