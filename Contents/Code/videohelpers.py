@@ -54,6 +54,12 @@ class MP4VideoHelper(VideoHelper):
       item.title = title
     except: pass
 
+    # Sort Title
+    try:
+      title_sort = tags["sonm"][0]
+      item.title_sort = title_sort
+    except: pass
+
     # Summary (long or short)
     try:
       try:
