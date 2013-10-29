@@ -195,6 +195,8 @@ class localMediaAlbum(Agent.Album):
           # If there is an appropriate AudioHelper, use it.
           audio_helper = audiohelpers.AudioHelpers(part.file)
           if audio_helper != None:
-            valid_posters = valid_posters + audio_helper.process_metadata(metadata)
+            try: 
+              valid_posters = valid_posters + audio_helper.process_metadata(metadata)
+            except: pass
 
     metadata.posters.validate_keys(valid_posters)
