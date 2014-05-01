@@ -5,8 +5,12 @@ import subtitlehelpers
 
 #####################################################################################################################
 
-def findAssests(metadata, paths, type, part = None):
-  root_file = getRootFile(helpers.unicodize(part.file)) if part else None
+def findAssets(metadata, paths, type, parts=[]):
+
+  ignore_samples = ['[-\._ ]sample', 'sample[-\._ ]']
+  ignore_trailers = ['-trailer\.']
+
+  root_file = getRootFile(helpers.unicodize(parts[0].file)) if parts else None
 
   # We start by building a dictionary of files to their absolute paths. We also need to know
   # the number of media files that are actually present, in case the found local media asset 
@@ -20,12 +24,47 @@ def findAssests(metadata, paths, type, part = None):
       # When using os.listdir with a unicode path, it will always return a string using the
       # NFD form. However, we internally are using the form NFC and therefore need to convert
       # it to allow correct regex / comparisons to be performed.
-      if os.path.isfile(os.path.join(path, helpers.unicodize(file_path))):
-        path_files[file_path.lower()] = os.path.join(path, file_path)
+      file_path = helpers.unicodize(file_path)
+      full_path = os.path.join(path,file_path)
 
-      # If we've found an actual media file (not a trailer), we should record it.
+      if os.path.isfile(full_path):
+        path_files[file_path.lower()] = full_path
+
+      # Only count real and distinct (not stacked) video files.
       (root, ext) = os.path.splitext(file_path)
-      if ext.lower()[1:] in config.VIDEO_EXTS and root.lower().endswith('-trailer') == False:
+      should_count = True
+  
+      # Check for valid video file extension.
+      if ext.lower()[1:] not in config.VIDEO_EXTS:
+        should_count = False
+
+      # Don't count sample files if they're smaller than 300MB.
+      if should_count:
+        for rx in ignore_samples:
+          if re.search(rx, full_path, re.IGNORECASE) and os.path.getsize(full_path) < 300 * 1024 * 1024:
+            Log('%s looks like a sample, won\'t contribute to total media file count.' % file_path)
+            should_count = False
+
+      # Don't count trailer files.
+      if should_count:
+        for rx in ignore_trailers:
+          if re.search(rx, full_path, re.IGNORECASE):
+            Log('%s looks like a trailer, won\'t contribute to total media file count.' % file_path)
+            should_count = False
+
+      # Don't count dot files.
+      if should_count:
+        if root.lower().startswith('.'):
+          Log('%s won\'t contribute to total media file count.' % file_path)
+          should_count = False
+
+      # Don't count stacked parts.
+      if should_count:
+        if full_path in [p.file for p in parts[1:]]:
+          should_count = False
+          Log('%s looks like a stacked part, won\'t contribute to total media file count.' % file_path)
+
+      if should_count:
         total_media_files += 1
 
   Log('Looking for %s media (%s) in %d paths (root file: %s) with %d media files.', type, metadata.title, len(paths), root_file, total_media_files)
@@ -112,7 +151,8 @@ def findSubtitles(part):
       # When using os.listdir with a unicode path, it will always return a string using the
       # NFD form. However, we internally are using the form NFC and therefore need to convert
       # it to allow correct regex / comparisons to be performed.
-      if os.path.isfile(os.path.join(path, helpers.unicodize(file_path_listing))):
+      file_path_listing = helpers.unicodize(file_path_listing)
+      if os.path.isfile(os.path.join(path, file_path_listing)):
         file_paths[file_path_listing.lower()] = os.path.join(path, file_path_listing)
 
       # If we've found an actual media file, we should record it.

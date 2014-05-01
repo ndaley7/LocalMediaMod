@@ -34,7 +34,7 @@ class localMediaMovie(Agent.Movies):
     path = os.path.dirname(part.file)
     
     # Look for local media.
-    try: localmedia.findAssests(metadata, [path], 'movie', part)
+    try: localmedia.findAssets(metadata, [path], 'movie', media.items[0].parts)
     except: 
       Log('Error finding media for movie %s', media.title)
 
@@ -92,7 +92,7 @@ class localMediaTV(Agent.TV_Shows):
         dir = os.path.dirname(episodeMedia.parts[0].file)
         dirs[dir] = True
         
-        try: localmedia.findAssests(episodeMetadata, [dir], 'episode', episodeMedia.parts[0])
+        try: localmedia.findAssets(episodeMetadata, [dir], 'episode', episodeMedia.parts)
         except: Log("Error finding season media for episode")
         
     # Figure out the directories we should be looking in.
@@ -101,13 +101,13 @@ class localMediaTV(Agent.TV_Shows):
     
     # Look for show images.
     Log("Looking for show media for %s.", metadata.title)
-    try: localmedia.findAssests(metadata, dirs, 'show')
+    try: localmedia.findAssets(metadata, dirs, 'show')
     except: Log("Error finding show media.")
     
     # Look for season images.
     for s in metadata.seasons:
       Log('Looking for season media for %s season %s.', metadata.title, s)
-      try: localmedia.findAssests(metadata.seasons[s], dirs, 'season')
+      try: localmedia.findAssets(metadata.seasons[s], dirs, 'season')
       except: Log("Error finding season media for season %s" % s)
         
     # Look for subtitles for each episode.
