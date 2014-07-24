@@ -9,6 +9,11 @@ def findAssets(metadata, paths, type, parts=[]):
 
   ignore_samples = ['[-\._ ]sample', 'sample[-\._ ]']
   ignore_trailers = ['-trailer\.']
+  extra_type_map = {'trailer' : TrailerObject,
+                    'deleted' : DeletedSceneObject,
+                    'behindthescenes' : BehindTheScenesObject,
+                    'interview' : InterviewObject,
+                    'scene' : SceneOrSampleObject}
 
   root_file = getRootFile(helpers.unicodize(parts[0].file)) if parts else None
 
@@ -66,6 +71,42 @@ def findAssets(metadata, paths, type, parts=[]):
 
       if should_count:
         total_media_files += 1
+
+    # Look for local extras.
+    extra_dirs = []
+    re_bts = Regex('[\W ]+')
+    if total_media_files != 1:
+      Log('Found %d media files in this directory, skipping local extras search: %s' % (total_media_files, path))
+    else:
+      Log('Looking for local extras in path: ' + path)
+      for root, dirs, files in os.walk(path):
+        for d in dirs:
+          if os.path.basename(root).lower().startswith('extra'):
+            if d.lower().startswith('trailer'):
+              extra_dirs.append({'type' : 'trailer', 'dir' : os.path.join(root, d)})
+              continue
+            if d.lower().startswith('deleted'):
+              extra_dirs.append({'type' : 'deleted', 'dir' : os.path.join(root, d)})
+              continue
+            if d.lower().startswith('interview'):
+              extra_dirs.append({'type' : 'interview', 'dir' : os.path.join(root, d)})
+              continue
+            if d.lower().startswith('scene') or d.lower().startswith('sample'):
+              extra_dirs.append({'type' : 'scene', 'dir' : os.path.join(root, d)})
+              continue
+            if re_bts.sub('', d.lower()).startswith('behindthescenes'):
+              extra_dirs.append({'type' : 'behindthescenes', 'dir' : os.path.join(root, d)})
+
+      extras = []
+      if len(extra_dirs) > 0:
+        for extra_dir in extra_dirs:
+          for f in os.listdir(extra_dir['dir']):
+            fn, ext = os.path.splitext(f)
+            if ext[1:] in config.VIDEO_EXTS:
+              Log('Found %s extra: %s' % (extra_dir['type'], f))
+              metadata.extras.add(extra_type_map[extra_dir['type']](title=fn, file=os.path.join(extra_dir['dir'], f)))
+
+      Log('Added %d extras' % len(metadata.extras))
 
   Log('Looking for %s media (%s) in %d paths (root file: %s) with %d media files.', type, metadata.title, len(paths), root_file, total_media_files)
   Log('Paths: %s', ", ".join([ helpers.unicodize(p) for p in paths ]))
