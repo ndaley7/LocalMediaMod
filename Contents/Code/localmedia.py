@@ -13,7 +13,8 @@ def findAssets(metadata, paths, type, parts=[]):
                     'deleted' : DeletedSceneObject,
                     'behindthescenes' : BehindTheScenesObject,
                     'interview' : InterviewObject,
-                    'scene' : SceneOrSampleObject}
+                    'scene' : SceneOrSampleObject,
+                    'sample' : SceneOrSampleObject}
 
   root_file = getRootFile(helpers.unicodize(parts[0].file)) if parts else None
 
@@ -69,42 +70,45 @@ def findAssets(metadata, paths, type, parts=[]):
           should_count = False
           Log('%s looks like a stacked part, won\'t contribute to total media file count.' % file_path)
 
+      # Don't count things that follow the "-extra" naming convention.
+      if should_count:
+        for key in extra_type_map.keys():
+          if root.endswith('-' + key):
+            Log('%s looks like a %s extra, won\'t contribute to total media file count.' % (file_path, key))
+            should_count = False
+
       if should_count:
         total_media_files += 1
 
     # Look for local extras.
     extra_dirs = []
-    re_bts = Regex('[\W ]+')
+    re_strip = Regex('[\W ]+')
+    
     if total_media_files != 1:
       Log('Found %d media files in this directory, skipping local extras search: %s' % (total_media_files, path))
     else:
+
+      # Look for extras in named directories.
       Log('Looking for local extras in path: ' + path)
       for root, dirs, files in os.walk(path):
         for d in dirs:
-          if os.path.basename(root).lower().startswith('extra'):
-            if d.lower().startswith('trailer'):
-              extra_dirs.append({'type' : 'trailer', 'dir' : os.path.join(root, d)})
+          for key in extra_type_map.keys():
+            if re_strip.sub('', d.lower()).startswith(key):
+              for f in os.listdir(os.path.join(root, d)):
+                (fn, ext) = os.path.splitext(f)
+                if ext[1:] in config.VIDEO_EXTS:
+                  Log('Found %s extra: %s' % (key, f))
+                  metadata.extras.add(extra_type_map[key](title=helpers.unicodize(fn), file=os.path.join(root, d, f)))
               continue
-            if d.lower().startswith('deleted'):
-              extra_dirs.append({'type' : 'deleted', 'dir' : os.path.join(root, d)})
-              continue
-            if d.lower().startswith('interview'):
-              extra_dirs.append({'type' : 'interview', 'dir' : os.path.join(root, d)})
-              continue
-            if d.lower().startswith('scene') or d.lower().startswith('sample'):
-              extra_dirs.append({'type' : 'scene', 'dir' : os.path.join(root, d)})
-              continue
-            if re_bts.sub('', d.lower()).startswith('behindthescenes'):
-              extra_dirs.append({'type' : 'behindthescenes', 'dir' : os.path.join(root, d)})
 
-      extras = []
-      if len(extra_dirs) > 0:
-        for extra_dir in extra_dirs:
-          for f in os.listdir(extra_dir['dir']):
-            fn, ext = os.path.splitext(f)
-            if ext[1:] in config.VIDEO_EXTS:
-              Log('Found %s extra: %s' % (extra_dir['type'], f))
-              metadata.extras.add(extra_type_map[extra_dir['type']](title=fn, file=os.path.join(extra_dir['dir'], f)))
+      # Look for filenames following the "-extra" convention.
+      for f in os.listdir(path):
+        for key in extra_type_map.keys():
+          (fn, ext) = os.path.splitext(f)
+          if fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
+            Log('Found %s extra: %s' % (key, f))
+            title = ' '.join(fn.split('-')[:-1])
+            metadata.extras.add(extra_type_map[key](title=helpers.unicodize(title), file=os.path.join(path, f)))
 
       Log('Added %d extras' % len(metadata.extras))
 
