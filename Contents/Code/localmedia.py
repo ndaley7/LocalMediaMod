@@ -81,7 +81,7 @@ def findAssets(metadata, paths, type, parts=[]):
         total_media_files += 1
 
     # Look for local extras.
-    extra_dirs = []
+    extras = []
     re_strip = Regex('[\W ]+')
     
     if total_media_files != 1:
@@ -105,7 +105,7 @@ def findAssets(metadata, paths, type, parts=[]):
                   root = re.sub(r'^\\\\\?\\', '', root)
                   
                   Log('Found %s extra: %s' % (key, f))
-                  metadata.extras.add(extra_type_map[key](title=helpers.unicodize(fn), file=os.path.join(root, d, f)))
+                  extras.append({'type' : key, 'title' : helpers.unicodize(fn), 'file' : os.path.join(root, d, f)})
               continue
 
       # Look for filenames following the "-extra" convention.
@@ -115,7 +115,15 @@ def findAssets(metadata, paths, type, parts=[]):
           if fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
             Log('Found %s extra: %s' % (key, f))
             title = ' '.join(fn.split('-')[:-1])
-            metadata.extras.add(extra_type_map[key](title=helpers.unicodize(title), file=os.path.join(path, f)))
+            extras.append({'type' : key, 'title' : helpers.unicodize(title), 'file' : os.path.join(path, f)})
+  
+      # Make sure extras are sorted alphabetically and by type.
+      type_order = ['trailer', 'behindthescenes', 'interview', 'deleted', 'scene', 'sample']
+      extras.sort(key=lambda e: e['title'])
+      extras.sort(key=lambda e: type_order.index(e['type']))
+
+      for extra in extras:
+        metadata.extras.add(extra_type_map[extra['type']](title=extra['title'], file=extra['file']))
 
       Log('Added %d extras' % len(metadata.extras))
 
