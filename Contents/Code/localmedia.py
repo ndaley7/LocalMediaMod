@@ -97,6 +97,13 @@ def findAssets(metadata, paths, type, parts=[]):
               for f in os.listdir(os.path.join(root, d)):
                 (fn, ext) = os.path.splitext(f)
                 if ext[1:] in config.VIDEO_EXTS:
+
+                  # On Windows, os.walk() likes to prepend the "extended-length path prefix" to root when using os.walk().
+                  # This causes issues later on when this path is converted to the file:// URL for serialization an later
+                  # consumption by PMS, so clean it up here.
+                  #
+                  root = re.sub(r'^\\\\\?\\', '', root)
+                  
                   Log('Found %s extra: %s' % (key, f))
                   metadata.extras.add(extra_type_map[key](title=helpers.unicodize(fn), file=os.path.join(root, d, f)))
               continue
