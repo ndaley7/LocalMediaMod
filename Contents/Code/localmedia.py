@@ -77,6 +77,12 @@ def findAssets(metadata, paths, type, parts=[]):
             Log('%s looks like a %s extra, won\'t contribute to total media file count.' % (file_path, key))
             should_count = False
 
+      # Don't count things that follow specific trailer naming conventions.
+      if should_count:
+        if root == 'trailer' or root.startswith('movie-trailer'):
+          Log('%s looks like a trailer, won\'t contribute to total media file count.' % (file_path))
+          should_count = False
+
       if should_count:
         total_media_files += 1
 
@@ -108,11 +114,18 @@ def findAssets(metadata, paths, type, parts=[]):
                   extras.append({'type' : key, 'title' : helpers.unicodize(fn), 'file' : os.path.join(root, d, f)})
               continue
 
-      # Look for filenames following the "-extra" convention.
+      # Look for filenames following the "-extra" convention and a couple of other special cases.
       for f in os.listdir(path):
         for key in extra_type_map.keys():
           (fn, ext) = os.path.splitext(f)
-          if fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
+          
+          # Files named exactly 'trailer' or starting with 'movie-trailer'.
+          if (fn == 'trailer' or fn.startswith('movie-trailer')) and ext[1:] in config.VIDEO_EXTS:
+            Log('Found trailer extra, renaming with title: ' + metadata.title)
+            extras.append({'type' : key, 'title' : metadata.title, 'file' : os.path.join(path, f)})
+          
+          # Files following the "-extra" convention.
+          elif fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
             Log('Found %s extra: %s' % (key, f))
             title = ' '.join(fn.split('-')[:-1])
             extras.append({'type' : key, 'title' : helpers.unicodize(title), 'file' : os.path.join(path, f)})
