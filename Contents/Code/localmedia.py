@@ -65,10 +65,11 @@ def findAssets(metadata, paths, type, parts=[]):
           Log('%s won\'t contribute to total media file count.' % file_path)
           should_count = False
 
-      # Don't count multi-part files.
+      # Don't count multi-part files (stack everything up to and including the year).
       if should_count:
-        if len(full_path.split('-')) > 1:
-          multi_part = '-'.join(full_path.split('-')[:-1]).strip()
+        year = re.search(r'([\(\[\.\-])([1-2][0-9]{3})([\.\-\)\]_,+])', file_path)
+        if year:
+          multi_part = file_path[0:year.end()]
           if multi_part in multi_parts:
             should_count = False
             Log('%s looks like part of a multi-version set, won\'t contribute to total media file count.' % file_path)
