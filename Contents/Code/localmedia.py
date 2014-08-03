@@ -22,6 +22,7 @@ def findAssets(metadata, paths, type, parts=[]):
   # the number of media files that are actually present, in case the found local media asset 
   # is limited to a single instance per media file.
   path_files = {}
+  multi_parts = []
   total_media_files = 0
   for path in paths:
     path = helpers.unicodize(path)
@@ -63,6 +64,16 @@ def findAssets(metadata, paths, type, parts=[]):
         if root.lower().startswith('.'):
           Log('%s won\'t contribute to total media file count.' % file_path)
           should_count = False
+
+      # Don't count multi-part files.
+      if should_count:
+        if len(full_path.split('-')) > 1:
+          multi_part = '-'.join(full_path.split('-')[:-1]).strip()
+          if multi_part in multi_parts:
+            should_count = False
+            Log('%s looks like part of a multi-version set, won\'t contribute to total media file count.' % file_path)
+          else:
+            multi_parts.append(multi_part)
 
       # Don't count stacked parts.
       if should_count:
