@@ -29,8 +29,7 @@ def findAssets(metadata, paths, type, parts=[]):
                 'deleted' : DeletedSceneObject,
                 'behindthescenes' : BehindTheScenesObject,
                 'interview' : InterviewObject,
-                'scene' : SceneOrSampleObject,
-                'sample' : SceneOrSampleObject}
+                'scene' : SceneOrSampleObject}
 
   # We start by building a dictionary of files to their absolute paths. We also need to know
   # the number of media files that are actually present, in case the found local media asset 
@@ -145,19 +144,21 @@ def findAssets(metadata, paths, type, parts=[]):
 
         # Look for filenames following the "-extra" convention and a couple of other special cases.
         for f in os.listdir(path):
-          for key in extra_type_map.keys():
-            (fn, ext) = os.path.splitext(f)
-            
-            # Files named exactly 'trailer' or starting with 'movie-trailer'.
-            if (fn == 'trailer' or fn.startswith('movie-trailer')) and ext[1:] in config.VIDEO_EXTS:
-              Log('Found trailer extra, renaming with title: ' + metadata.title)
-              extras.append({'type' : key, 'title' : metadata.title, 'file' : os.path.join(path, f)})
-            
-            # Files following the "-extra" convention.
-            elif fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
-              Log('Found %s extra: %s' % (key, f))
-              title = ' '.join(fn.split('-')[:-1])
-              extras.append({'type' : key, 'title' : helpers.unicodize(title), 'file' : os.path.join(path, f)})
+
+          (fn, ext) = os.path.splitext(f)
+
+          # Files named exactly 'trailer' or starting with 'movie-trailer'.
+          if (fn == 'trailer' or fn.startswith('movie-trailer')) and ext[1:] in config.VIDEO_EXTS:
+            Log('Found trailer extra, renaming with title: ' + metadata.title)
+            extras.append({'type' : key, 'title' : metadata.title, 'file' : os.path.join(path, f)})
+
+          # Files following the "-extra" convention.
+          else:
+            for key in extra_type_map.keys():
+              if fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
+                Log('Found %s extra: %s' % (key, f))
+                title = ' '.join(fn.split('-')[:-1])
+                extras.append({'type' : key, 'title' : helpers.unicodize(title), 'file' : os.path.join(path, f)})
     
         # Make sure extras are sorted alphabetically and by type.
         type_order = ['trailer', 'behindthescenes', 'interview', 'deleted', 'scene', 'sample']
