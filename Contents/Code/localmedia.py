@@ -130,7 +130,7 @@ def findAssets(metadata, paths, type, parts=[]):
               if re_strip.sub('', d.lower()).startswith(key):
                 for f in os.listdir(os.path.join(root, d)):
                   (fn, ext) = os.path.splitext(f)
-                  if ext[1:] in config.VIDEO_EXTS:
+                  if not fn.startswith('.') and ext[1:] in config.VIDEO_EXTS:
 
                     # On Windows, os.walk() likes to prepend the "extended-length path prefix" to root.
                     # This causes issues later on when this path is converted to the file:// URL for
@@ -148,14 +148,14 @@ def findAssets(metadata, paths, type, parts=[]):
           (fn, ext) = os.path.splitext(f)
 
           # Files named exactly 'trailer' or starting with 'movie-trailer'.
-          if (fn == 'trailer' or fn.startswith('movie-trailer')) and ext[1:] in config.VIDEO_EXTS:
+          if (fn == 'trailer' or fn.startswith('movie-trailer')) and not fn.startswith('.') and ext[1:] in config.VIDEO_EXTS:
             Log('Found trailer extra, renaming with title: ' + metadata.title)
             extras.append({'type' : key, 'title' : metadata.title, 'file' : os.path.join(path, f)})
 
           # Files following the "-extra" convention.
           else:
             for key in extra_type_map.keys():
-              if fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
+              if not fn.startswith('.') and fn.endswith('-' + key) and ext[1:] in config.VIDEO_EXTS:
                 Log('Found %s extra: %s' % (key, f))
                 title = ' '.join(fn.split('-')[:-1])
                 extras.append({'type' : key, 'title' : helpers.unicodize(title), 'file' : os.path.join(path, f)})
