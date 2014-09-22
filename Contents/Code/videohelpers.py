@@ -34,8 +34,9 @@ class MP4VideoHelper(VideoHelper):
 
     Log('Reading MP4 tags')
     try: tags = File(self.filename, options=[MP4])
-    except:
+    except Exception, e:
       Log('An error occurred while attempting to parse the MP4 file: ' + self.filename)
+      Log(str(e))
       return
     if tags == None:
       Log('Not reading tags from %s because it doesn\'t look like an MP4 file.' % self.filename)
