@@ -41,7 +41,7 @@ def findAssets(metadata, paths, type, parts=[]):
   root_file = getRootFile(helpers.unicodize(parts[0].file)) if parts else None
   for path in paths:
     path = helpers.unicodize(path)
-    for file_path in os.listdir(path):
+    for file_path in sorted(os.listdir(path)):
 
       # When using os.listdir with a unicode path, it will always return a string using the
       # NFD form. However, we internally are using the form NFC and therefore need to convert
