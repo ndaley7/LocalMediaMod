@@ -28,10 +28,10 @@ class ID3AudioHelper(AudioHelper):
 
   def process_metadata(self, metadata):
     
-    Log("Reading MP3 tags")
+    Log("Reading ID3 tags")
     try: tags = MFile(self.filename, easy=True)
     except: 
-      Log('An error occurred while attempting to parse the MP3 file: ' + self.filename)
+      Log('An error occurred while attempting to read ID3 tags from ' + self.filename)
       return
 
     # Release Date
