@@ -2,9 +2,8 @@ import os
 import helpers
 
 from mutagen.flac import FLAC
-from mutagen.id3 import ID3
-from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbis
+from mutagen import File as MFile
 
 class AudioHelper(object):
   def __init__(self, filename):
@@ -12,27 +11,27 @@ class AudioHelper(object):
 
 def AudioHelpers(filename):
   filename = helpers.unicodize(filename)
-  file = os.path.basename(filename)
-  (file, ext) = os.path.splitext(file)
+  tag = MFile(filename, None, True)
 
-  for cls in [ MP3AudioHelper, MP4AudioHelper, FLACAudioHelper, OGGAudioHelper ]:
-    if cls.is_helper_for(ext):
-      return cls(filename)
+  if tag is not None:
+    for cls in [ ID3AudioHelper, MP4AudioHelper, FLACAudioHelper, OGGAudioHelper ]:
+      if cls.is_helper_for(type(tag).__name__):
+        return cls(filename)
   return None
 
 #####################################################################################################################
 
-class MP3AudioHelper(AudioHelper):
+class ID3AudioHelper(AudioHelper):
   @classmethod
-  def is_helper_for(cls, file_extension):
-    return file_extension.lower() in ['.mp3']
+  def is_helper_for(cls, tagType):
+    return tagType in ('EasyID3', 'EasyMP3', 'EasyTrueAudio', 'ID3', 'MP3', 'TrueAudio', 'AIFF') # All of these file types use ID3 tags like MP3
 
   def process_metadata(self, metadata):
     
     Log("Reading MP3 tags")
-    try: tags = ID3(self.filename)
+    try: tags = MFile(self.filename, easy=True)
     except: 
-      Log('An error occurred while attempting to parse the MP4 file: ' + self.filename)
+      Log('An error occurred while attempting to parse the MP3 file: ' + self.filename)
       return
 
     # Release Date
@@ -73,13 +72,13 @@ class MP3AudioHelper(AudioHelper):
 
 class MP4AudioHelper(AudioHelper):
   @classmethod
-  def is_helper_for(cls, file_extension):
-    return file_extension.lower() in ['.mp4','.m4a','.m4p']
+  def is_helper_for(cls, tagType):
+    return tagType in ['MP4','EasyMP4']
 
   def process_metadata(self, metadata):
 
     Log('Reading MP4 tags')
-    try: tags = MP4(self.filename)
+    try: tags = MFile(self.filename, easy=True)
     except: 
       Log('An error occurred while attempting to parse the MP4 file: ' + self.filename)
       return
@@ -121,8 +120,8 @@ class MP4AudioHelper(AudioHelper):
 
 class FLACAudioHelper(AudioHelper):
   @classmethod
-  def is_helper_for(cls, file_extension):
-    return file_extension.lower() in ['.flac']
+  def is_helper_for(cls, tagType):
+    return tagType in ['FLAC']
 
   def process_metadata(self, metadata):
 
@@ -149,8 +148,8 @@ class FLACAudioHelper(AudioHelper):
 
 class OGGAudioHelper(AudioHelper):
   @classmethod
-  def is_helper_for(cls, file_extension):
-    return file_extension.lower() in ['.ogg']
+  def is_helper_for(cls, tagType):
+    return tagType in ['OggVorbis']
 
   def process_metadata(self, metadata):
 
