@@ -1,9 +1,8 @@
 import os
 import helpers
 
-from mutagen.flac import FLAC
-from mutagen.oggvorbis import OggVorbis
 from mutagen import File as MFile
+from mutagen.flac import Picture
 
 class AudioHelper(object):
   def __init__(self, filename):
@@ -28,43 +27,50 @@ class ID3AudioHelper(AudioHelper):
 
   def process_metadata(self, metadata):
     
-    Log("Reading ID3 tags")
-    try: tags = MFile(self.filename, easy=True)
+    Log('Reading ID3 tags from: ' + self.filename)
+    try:
+      tags = MFile(self.filename)
+      Log('Found tags: ' + str(tags.keys()))
     except: 
       Log('An error occurred while attempting to read ID3 tags from ' + self.filename)
       return
 
     # Release Date
     try:
-      tdrc_tag = tags.getall("TDRC")[0]
-      metadata.originally_available_at = Datetime.ParseDate('01-01-' + tdrc_tag.text[0].get_text()).date()
-    except:
-      pass
+      year = tags.get('TDRC')
+      if year is not None and len(year.text) > 0:
+        metadata.originally_available_at = Datetime.ParseDate('01-01-' + str(year.text[0])).date()
+    except Exception, e:
+      Log('Exception reading TDRC (year): ' + str(e))
 
     # Genres
     try:
-      genres = tags.getall('TCON')
-      metadata.genres.clear()
-      for genre in genres:
-        metadata.genres.add(genre)
-    except: 
-      pass
+      genres = tags.get('TCON')
+      if genres is not None and len(genres.text) > 0:
+        metadata.genres.clear()
+        for genre in genres.text:
+          for sub_genre in genre.split('/'):
+            metadata.genres.add(sub_genre.strip())
+    except Exception, e:
+      Log('Exception reading TCON (genre): ' + str(e))
 
     # Posters
-    valid_posters = []
-    for frame in tags.getall("APIC"):
-      if (frame.mime == 'image/jpeg') or (frame.mime == 'image/jpg'): ext = 'jpg'
-      elif frame.mime == 'image/png': ext = 'png'
-      elif frame.mime == 'image/gif': ext = 'gif'
-      else: ext = ''
+    try:
+      valid_posters = []
+      frames = [f for f in tags if f.startswith('APIC:')]
+      for frame in frames:
+        if (tags[frame].mime == 'image/jpeg') or (tags[frame].mime == 'image/jpg'): ext = 'jpg'
+        elif tags[frame].mime == 'image/png': ext = 'png'
+        elif tags[frame].mime == 'image/gif': ext = 'gif'
+        else: ext = ''
 
-      poster_name = hashlib.md5(frame.data).hexdigest()
-      valid_posters.append(poster_name)
-      if poster_name not in metadata.posters:
-        Log('Adding embedded APIC art from mp3 file: ' + self.filename)
-        metadata.posters[poster_name] = Proxy.Media(frame.data, ext = ext)
-      else:
-        Log('Skipping APIC art since its already added')
+        poster_name = hashlib.md5(tags[frame].data).hexdigest()
+        valid_posters.append(poster_name)
+        if poster_name not in metadata.posters:
+          Log('Adding embedded APIC art: ' + poster_name)
+          metadata.posters[poster_name] = Proxy.Media(tags[frame].data, ext = ext)
+    except Exception, e:
+      Log('Exception adding posters: ' + str(e))
 
     return valid_posters
 
@@ -77,42 +83,46 @@ class MP4AudioHelper(AudioHelper):
 
   def process_metadata(self, metadata):
 
-    Log('Reading MP4 tags')
-    try: tags = MFile(self.filename, easy=True)
+    Log('Reading MP4 tags from: ' + self.filename)
+    try: 
+      tags = MFile(self.filename)
+      Log('Found tags: ' + str(tags.keys()))
     except: 
       Log('An error occurred while attempting to parse the MP4 file: ' + self.filename)
       return
 
     # Genres
     try:
-      genres = tags["\xa9gen"][0]
-      if len(genres) > 0:
-        genre_list = genres.split('/')
+      genres = tags.get('\xa9gen')
+      if genres is not None and len(genres) > 0:
         metadata.genres.clear()
-        for genre in genre_list:
-          metadata.genres.add(genre.strip())
-    except: pass
+        for genre in genres:
+          for sub_genre in genre.split('/'):
+            metadata.genres.add(sub_genre.strip())
+    except Exception, e:
+      Log('Exception reading \xa9gen (genre): ' + str(e))
 
     # Release Date
     try:
-      release_date = tags["\xa9day"][0]
-      release_date = release_date.split('T')[0]
-      parsed_date = Datetime.ParseDate(release_date)
-      metadata.originally_available_at = parsed_date.date()
-    except: pass
+      release_date = tags.get('\xa9day')
+      if release_date is not None and len(release_date) > 0:
+        metadata.originally_available_at = Datetime.ParseDate(release_date[0].split('T')[0])
+    except Exception, e:
+      Log('Exception reading \xa9day (release date)' + str(e))
 
     # Posters
     valid_posters = []
     try:
-      data = str(tags["covr"][0])
-      poster_name = hashlib.md5(data).hexdigest()
-      valid_posters.append(poster_name)
-      if poster_name not in metadata.posters:
-        Log('Adding embedded coverart from m4a/mp4 file: ' + self.filename)
-        metadata.posters[poster_name] = Proxy.Media(data)
-      else:
-        Log('Skipping coverart since its already added')
-    except: pass
+      covers = tags.get('covr')
+      if covers is not None and len(covers) > 0:
+        for cover in covers:
+          poster_name = hashlib.md5(cover).hexdigest()
+          valid_posters.append(poster_name)
+          if poster_name not in metadata.posters:
+            Log('Adding embedded cover art: ' + poster_name)
+            metadata.posters[poster_name] = Proxy.Media(cover)
+    except Exception, e:
+      Log('Exception adding posters: ' + str(e))
 
     return valid_posters
 
@@ -125,22 +135,46 @@ class FLACAudioHelper(AudioHelper):
 
   def process_metadata(self, metadata):
 
-    Log('Reading FLAC tags')
-    try: tags = FLAC(self.filename)
+    Log('Reading FLAC tags from: ' + self.filename)
+    try: 
+      tags = MFile(self.filename)
+      Log('Found tags: ' + str(tags.keys()))
     except:
       Log('An error occurred while attempting to parse the FLAC file: ' + self.filename)
       return
 
+    # Genres
+    try:
+      genres = tags.get('genre')
+      if genres is not None and len(genres) > 0:
+        metadata.genres.clear()
+        for genre in genres:
+          for sub_genre in genre.split('/'):
+            metadata.genres.add(sub_genre.strip())
+    except Exception, e:
+      Log('Exception reading genre: ' + str(e))
+
+    # Release Date
+    try:
+      release_date = tags.get('date')
+      if release_date is not None and len(release_date) > 0:
+        metadata.originally_available_at = Datetime.ParseDate(release_date[0])
+    except Exception, e:
+      Log('Exception reading release date' + str(e))
+
     # Posters
     valid_posters = []
-    for poster in tags.pictures:
-      poster_name = hashlib.md5(poster.data).hexdigest()
-      valid_posters.append(poster_name)
-      if poster_name not in metadata.posters:
-        Log('Adding embedded art from FLAC file: ' + self.filename)
-        metadata.posters[poster_name] = Proxy.Media(poster.data)
-      else:
-        Log('Skipping embedded art since its already added')
+    try:
+      covers = tags.pictures
+      if covers is not None and len(covers) > 0:
+        for cover in covers:
+          poster_name = hashlib.md5(cover.data).hexdigest()
+          valid_posters.append(poster_name)
+          if poster_name not in metadata.posters:
+            Log('Adding embedded cover art: ' + poster_name)
+            metadata.posters[poster_name] = Proxy.Media(cover.data)
+    except Exception, e:
+      Log('Exception adding posters: ' + str(e))
 
     return valid_posters
 
@@ -153,23 +187,46 @@ class OGGAudioHelper(AudioHelper):
 
   def process_metadata(self, metadata):
 
-    Log('Reading OGG tags')
-    try: tags = OggVorbis(self.filename)
+    Log('Reading OGG tags from: ' + self.filename)
+    try: 
+      tags = MFile(self.filename)
+      Log('Found tags: ' + str(tags.keys()))
     except:
       Log('An error occured while attempting to parse the OGG file: ' + self.filename)
       return
 
+    # Genres
+    try:
+      genres = tags.get('genre')
+      if genres is not None and len(genres) > 0:
+        metadata.genres.clear()
+        for genre in genres:
+          for sub_genre in genre.split('/'):
+            metadata.genres.add(sub_genre.strip())
+    except Exception, e:
+      Log('Exception reading genre: ' + str(e))
+
+    # Release Date
+    try:
+      release_date = tags.get('date')
+      if release_date is not None and len(release_date) > 0:
+        metadata.originally_available_at = Datetime.ParseDate(release_date[0])
+    except Exception, e:
+      Log('Exception reading release date' + str(e))
+
     # Posters
     valid_posters = []
-    if tags.has_key('coverart'):
-      for poster in tags['coverart']:
-        poster_data = base64.standard_b64decode(poster)
-        poster_name = hashlib.md5(poster_data).hexdigest()
-        valid_posters.append(poster_name)
-        if poster_name not in metadata.posters:
-          Log('Adding embedded art from OGG file: ' + self.filename)
-          metadata.posters[poster_name] = Proxy.Media(poster_data)
-        else:
-          Log('Skipping embedded art since its already added')
+    try:
+      covers = tags.get('metadata_block_picture')
+      if covers is not None and len(covers) > 0:
+        for cover in covers:
+          poster = Picture(base64.standard_b64decode(cover))
+          poster_name = hashlib.md5(poster.data).hexdigest()
+          valid_posters.append(poster_name)
+          if poster_name not in metadata.posters:
+            Log('Adding embedded cover art: ' + poster_name)
+            metadata.posters[poster_name] = Proxy.Media(poster.data)
+    except Exception, e:
+      Log('Exception adding posters: ' + str(e))
 
     return valid_posters
