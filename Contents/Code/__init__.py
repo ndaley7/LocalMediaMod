@@ -113,24 +113,20 @@ class localMediaTV(Agent.TV_Shows):
         
     # Look for subtitles for each episode.
     for s in media.seasons:
+      # If we've got a date based season, ignore it for now, otherwise it'll collide with S/E folders/XML and PMS
+      # prefers date-based (why?)
+      if int(s) < 1900 or metadata.guid.startswith(PERSONAL_MEDIA_IDENTIFIER):
+        for e in media.seasons[s].episodes:
+          for i in media.seasons[s].episodes[e].items:
 
-      # Note: We used to prevent this, but we're not 100% sure why, and it seemed to work okay in testing, so I'm
-      # demoting this to a log statement for now to help track down any weirdness we may see in the wild around it.
-      #
-      if not(int(s) < 1900 or metadata.guid.startswith(PERSONAL_MEDIA_IDENTIFIER)):
-        Log('Proceeding to look for subs in something that looks like a date-based series: %s (season %s)' % (metadata.title, s))
+            # Look for subtitles.
+            for part in i.parts:
+              localmedia.findSubtitles(part)
 
-      for e in media.seasons[s].episodes:
-        for i in media.seasons[s].episodes[e].items:
-
-          # Look for subtitles.
-          for part in i.parts:
-            localmedia.findSubtitles(part)
-
-            # If there is an appropriate VideoHelper, use it.
-            video_helper = videohelpers.VideoHelpers(part.file)
-            if video_helper:
-              video_helper.process_metadata(metadata, episode = metadata.seasons[s].episodes[e])
+              # If there is an appropriate VideoHelper, use it.
+              video_helper = videohelpers.VideoHelpers(part.file)
+              if video_helper:
+                video_helper.process_metadata(metadata, episode = metadata.seasons[s].episodes[e])
       else:
         # Whack it in case we wrote it.
         #del metadata.seasons[s]
