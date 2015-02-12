@@ -134,20 +134,40 @@ class localMediaTV(Agent.TV_Shows):
 
 #####################################################################################################################
 
-class localMediaArtist(Agent.Artist):
+class localMediaArtistCommon(object):
   name = 'Local Media Assets (Artists)'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
   persist_stored_files = False
-  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
-  
-  def search(self, results, media, lang):
-    results.Append(MetadataSearchResult(id = 'null', name=media.artist, score = 100))
 
   def update(self, metadata, media, lang):
     # Set title if needed.
     if media and metadata.title is None: metadata.title = media.title
-    pass 
+    pass
+
+
+class localMediaArtistLegacy(localMediaArtistCommon, Agent.Artist):
+  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+
+  def search(self, results, media, lang):
+    results.Append(MetadataSearchResult(id = 'null', name=media.artist, score = 100))
+
+
+class localMediaArtistModern(localMediaArtistCommon, Agent.Artist):
+  version = 2
+  contributes_to = ['com.plexapp.agents.plexmusic']
+
+  def search(self, results, tree, hints, lang='en', manual=False):
+    results.add(SearchResult(id='null', type='artist', parentName=hints.artist, score=100))
+
+  def update(self, metadata, media, lang='en', child_guid=None):
+    super(localMediaArtistModern, self).update(metadata, media, lang)
+
+    Log("IN MODERN UPDATE")
+
+    # Do special things for modern artists.
+    metadata.summary = "Multi-version test"
+
 
 #####################################################################################################################
 
