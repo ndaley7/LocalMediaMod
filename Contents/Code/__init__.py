@@ -163,13 +163,12 @@ class localMediaArtistModern(localMediaArtistCommon, Agent.Artist):
   def update(self, metadata, media, lang='en', child_guid=None):
     super(localMediaArtistModern, self).update(metadata, media, lang)
 
-    Log("IN MODERN UPDATE")
+    if child_guid:
+      pass  # TODO: single-album updates.
+    else:
+      for album in media.children:
+        updateAlbum(metadata.albums[album.guid], album, lang)
 
-    # Do special things for modern artists.
-    metadata.summary = "Multi-version test"
-
-
-#####################################################################################################################
 
 class localMediaAlbum(Agent.Album):
   name = 'Local Media Assets (Albums)'
@@ -182,42 +181,46 @@ class localMediaAlbum(Agent.Album):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
-    # Set title if needed.
-    if media and metadata.title is None: metadata.title = media.title
-      
-    valid_posters = []
-    for track in media.tracks:
-      for item in media.tracks[track].items:
-        for part in item.parts:
-          filename = helpers.unicodize(part.file)
-          path = os.path.dirname(filename)
-          (file_root, fext) = os.path.splitext(filename)
+    updateAlbum(metadata, media, lang)
 
-          path_files = {}
-          for p in os.listdir(path):
-            path_files[p.lower()] = p
 
-          # Look for posters
-          poster_files = config.POSTER_FILES + [ os.path.basename(file_root), helpers.splitPath(path)[-1] ]
-          for ext in config.ART_EXTS:
-            for name in poster_files:
-              file = (name + '.' + ext).lower()
-              if file in path_files.keys():
-                data = Core.storage.load(os.path.join(path, path_files[file]))
-                poster_name = hashlib.md5(data).hexdigest()
-                valid_posters.append(poster_name)
+def updateAlbum(metadata, media, lang):
+  # Set title if needed.
+  if media and metadata.title is None: metadata.title = media.title
+    
+  valid_posters = []
+  for track in media.tracks:
+    for item in media.tracks[track].items:
+      for part in item.parts:
+        filename = helpers.unicodize(part.file)
+        path = os.path.dirname(filename)
+        (file_root, fext) = os.path.splitext(filename)
 
-                if poster_name not in metadata.posters:
-                  metadata.posters[poster_name] = Proxy.Media(data)
-                  Log('Local asset image added: ' + file + ', for file: ' + filename)
-                else:
-                  Log('Skipping local poster since its already added')
+        path_files = {}
+        for p in os.listdir(path):
+          path_files[p.lower()] = p
 
-          # If there is an appropriate AudioHelper, use it.
-          audio_helper = audiohelpers.AudioHelpers(part.file)
-          if audio_helper != None:
-            try: 
-              valid_posters = valid_posters + audio_helper.process_metadata(metadata)
-            except: pass
+        # Look for posters
+        poster_files = config.POSTER_FILES + [ os.path.basename(file_root), helpers.splitPath(path)[-1] ]
+        for ext in config.ART_EXTS:
+          for name in poster_files:
+            file = (name + '.' + ext).lower()
+            if file in path_files.keys():
+              data = Core.storage.load(os.path.join(path, path_files[file]))
+              poster_name = hashlib.md5(data).hexdigest()
+              valid_posters.append(poster_name)
 
-    metadata.posters.validate_keys(valid_posters)
+              if poster_name not in metadata.posters:
+                metadata.posters[poster_name] = Proxy.Media(data)
+                Log('Local asset image added: ' + file + ', for file: ' + filename)
+              else:
+                Log('Skipping local poster since its already added')
+
+        # If there is an appropriate AudioHelper, use it.
+        audio_helper = audiohelpers.AudioHelpers(part.file)
+        if audio_helper != None:
+          try: 
+            valid_posters = valid_posters + audio_helper.process_metadata(metadata)
+          except: pass
+
+  metadata.posters.validate_keys(valid_posters)
