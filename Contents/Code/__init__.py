@@ -164,7 +164,7 @@ class localMediaArtistModern(localMediaArtistCommon, Agent.Artist):
     super(localMediaArtistModern, self).update(metadata, media, lang)
 
     if child_guid:
-      pass  # TODO: single-album updates.
+      updateAlbum(metadata.albums[child_guid], media.children[0], lang)
     else:
       for album in media.children:
         updateAlbum(metadata.albums[album.guid], album, lang)
