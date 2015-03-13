@@ -175,19 +175,16 @@ class localMediaArtistModern(localMediaArtistCommon, Agent.Artist):
       Log('Not adding extras: Framework v2.5.2+ required')  # TODO: Update with real min version.
       find_extras = False
 
-    artist_extras = []
+    artist_extras = {}
     if child_guid:
       updateAlbum(metadata.albums[child_guid], media.children[0], lang, find_extras=find_extras, artist_extras=artist_extras)
     else:
       for album in media.children:
         updateAlbum(metadata.albums[album.guid], album, lang, find_extras=find_extras, artist_extras=artist_extras)
 
-    seen = []
-    for extra in artist_extras:
-      if extra.file not in seen:
-        Log('Adding artist extra: %s' % extra.title)
-        metadata.extras.add(extra)
-        seen.append(extra.file)
+    for extra in artist_extras.values():
+      Log('Adding artist extra: %s' % extra.title)
+      metadata.extras.add(extra)
 
 
 class localMediaAlbum(Agent.Album):
@@ -204,11 +201,21 @@ class localMediaAlbum(Agent.Album):
     updateAlbum(metadata, media, lang)
 
 
-def updateAlbum(metadata, media, lang, find_extras=False, artist_extras=[]):
+def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}):
   # Set title if needed.
   if media and metadata.title is None: metadata.title = media.title
-    
+  
+  # Video extras.
+  if find_extras:
+    extra_type_map = {
+      'video' : MusicVideoObject,
+      'live' : LiveMusicVideoObject,
+      'lyrics' : LyricMusicVideoObject,
+      'behindthescenes' : BehindTheScenesObject,
+      'interview' : InterviewObject }
+  
   valid_posters = []
+  path = None
   for track in media.tracks:
     for item in media.tracks[track].items:
       for part in item.parts:
@@ -243,36 +250,51 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras=[]):
             valid_posters = valid_posters + audio_helper.process_metadata(metadata)
           except: pass
 
-        # Video extras.
+        # Look for music videos for this track of the format: "track file name - pretty name (optional) - type (optional).ext"
         if find_extras:
+          file_name = os.path.basename(file_root)
+          for video in [f for f in os.listdir(path) 
+                        if os.path.splitext(f)[1][1:].lower() in config.VIDEO_EXTS 
+                        and helpers.unicodize(f).lower().startswith(file_name.lower())]:
 
-          extra_type_map = {
-            'video' : MusicVideoObject,
-            'live' : LiveMusicVideoObject,
-            'lyrics' : LyricMusicVideoObject,
-            'behindthescenes' : BehindTheScenesObject,
-            'interview' : InterviewObject }
+            video_file, ext = os.path.splitext(video)
+            name_components = video_file.split('-')
 
-          (track_file, ext) = os.path.splitext(os.path.basename(part.file))
-          for video in [f for f in os.listdir(path) if os.path.splitext(os.path.basename(f))[1][1:].lower() in config.VIDEO_EXTS]:
-            (video_file, ext) = os.path.splitext(os.path.basename(video))
-
-            # Support things like 'Foo.mov', 'Foo - live.mkv', 'Foo - lyrics.mp4' (default type is MusicVideoObject).
-            extra_type_flag = video_file.split('-')[-1].replace(' ', '').lower()
-            if extra_type_flag in extra_type_map:
-              video_title = '-'.join(video_file.split('-')[:-1]).strip()
-              extra_type = extra_type_map[extra_type_flag]
+            if len(name_components) > 1 and name_components[-1].lower().strip() in extra_type_map:
+              extra_type = extra_type_map[name_components.pop(-1).lower().strip()]
             else:
-              video_title = video_file
               extra_type = MusicVideoObject
 
-            # Add all the videos we find to the artist extra list.
-            extra_obj = extra_type(title=video_title, file=os.path.join(path, video))
-            artist_extras.append(extra_obj)
+            # Use the video file name for the title unless we have a prettier one.
+            pretty_title = '-'.join(name_components).strip()
+            if len(pretty_title) - len(file_name) > 0:
+              pretty_title = pretty_title.replace(file_name, '')
+              pretty_title = re.sub(r'^[- ]+', '', pretty_title)
 
-            # If this is a music video and it also matches a track, add it there too.
-            if extra_type == MusicVideoObject and video_title.lower() in track_file.lower():
-              metadata.tracks[track].extras.add(MusicVideoObject(title=video_file, file=os.path.join(path, video)))
-              Log('Added video for track: %s from file: %s' % (media.tracks[track].title, os.path.join(path, video)))
+            track_video = extra_type(title=pretty_title, file=os.path.join(path, video))
+            artist_extras[video] = track_video
 
-  metadata.posters.validate_keys(valid_posters)
+            if extra_type == MusicVideoObject:
+              metadata.tracks[track].extras.add(track_video)
+              Log('Added video %s for track: %s from file: %s' % (pretty_title, media.tracks[track].title, os.path.join(path, video)))
+            else:
+              Log('Skipping track video %s (only regular music videos allowed on tracks)' % video)
+
+  if find_extras:
+
+    # Look for other videos in this directory.
+    for video in [f for f in os.listdir(path) 
+                  if os.path.splitext(f)[1][1:].lower() in config.VIDEO_EXTS
+                  and f not in artist_extras]:
+
+      video_file, ext = os.path.splitext(video)
+      name_components = video_file.split('-')
+
+      if len(name_components) > 1 and name_components[-1].lower().strip() in extra_type_map:
+        extra_type = extra_type_map[name_components.pop(-1).lower().strip()]
+      else:
+        extra_type = MusicVideoObject
+
+      Log('Found artist video: %s' % video)
+      artist_extras[video] = extra_type(title='-'.join(name_components), file=os.path.join(path,video))
+      
