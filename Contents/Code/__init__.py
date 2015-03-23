@@ -147,7 +147,7 @@ class localMediaArtistCommon(object):
 
 
 class localMediaArtistLegacy(localMediaArtistCommon, Agent.Artist):
-  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.plexmusic', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', name=media.artist, score = 100))
@@ -192,7 +192,7 @@ class localMediaAlbum(Agent.Album):
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
   persist_stored_files = False
-  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.none']
+  contributes_to = ['com.plexapp.agents.discogs', 'com.plexapp.agents.lastfm', 'com.plexapp.agents.plexmusic', 'com.plexapp.agents.none']
 
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
