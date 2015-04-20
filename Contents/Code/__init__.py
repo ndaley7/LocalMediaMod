@@ -6,6 +6,7 @@ import localmedia
 import audiohelpers
 import videohelpers
 
+from mutagen import File
 from mutagen.mp4 import MP4
 from mutagen.id3 import ID3
 from mutagen.flac import FLAC
@@ -13,6 +14,16 @@ from mutagen.flac import Picture
 from mutagen.oggvorbis import OggVorbis
 
 PERSONAL_MEDIA_IDENTIFIER = "com.plexapp.agents.none"
+
+#####################################################################################################################
+
+@expose
+def ReadTags(f):
+  try:
+    return dict(File(f, easy=True))
+  except Exception, e:
+    Log('Error reading tags from file: %s' % f)
+    return {}
 
 #####################################################################################################################
 
