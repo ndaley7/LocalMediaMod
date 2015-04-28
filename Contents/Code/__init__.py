@@ -272,10 +272,12 @@ def findTrackExtra(file_path, extra_type_map, artist_extras={}):
 
     video_file, ext = os.path.splitext(video)
     name_components = video_file.split('-')
-    if len(name_components) > 1 and name_components[-1].lower().strip() in extra_type_map:
-      extra_type = extra_type_map[name_components.pop(-1).lower().strip()]
-    else:
-      extra_type = MusicVideoObject
+    extra_type = MusicVideoObject
+    if len(name_components) > 1:
+      type_component = re.sub(r'[ ._]+', '', name_components[-1].lower())
+      if type_component in extra_type_map:
+        extra_type = extra_type_map[type_component]
+        name_components.pop(-1)
 
     # Use the video file name for the title unless we have a prettier one.
     pretty_title = '-'.join(name_components).strip()
