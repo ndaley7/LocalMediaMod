@@ -284,6 +284,8 @@ def findTrackExtra(file_path, extra_type_map, artist_extras={}):
     pretty_title = '-'.join(name_components).strip()
     if len(pretty_title) - len(file_root) > 0:
       pretty_title = pretty_title.replace(file_root, '')
+      if pretty_title.startswith(file_ext):
+        pretty_title = pretty_title[len(file_ext):]
       pretty_title = re.sub(r'^[- ]+', '', pretty_title)
 
     track_video = extra_type(title=pretty_title, file=os.path.join(os.path.dirname(file_path), video))
