@@ -173,7 +173,7 @@ class localMediaArtistCommon(object):
       for artist_file_dir in set(artist_file_dirs):
         findArtistExtras(helpers.unicodize(artist_file_dir), extra_type_map, artist_extras)
 
-      for extra in artist_extras.values():
+      for extra in sorted(artist_extras.values(), key = lambda v: (getExtraSortOrder()[type(v)], v.title)):
         metadata.extras.add(extra)
 
 
@@ -266,6 +266,7 @@ def findTrackExtra(file_path, extra_type_map, artist_extras={}):
   # Look for music videos for this track of the format: "track file name - pretty name (optional) - type (optional).ext"
   file_name = os.path.basename(file_path)
   file_root, file_ext = os.path.splitext(file_name)
+  track_videos = []
   for video in [f for f in os.listdir(os.path.dirname(file_path)) 
                 if os.path.splitext(f)[1][1:].lower() in config.VIDEO_EXTS 
                 and helpers.unicodize(f).lower().startswith(file_root.lower())]:
@@ -288,11 +289,15 @@ def findTrackExtra(file_path, extra_type_map, artist_extras={}):
     track_video = extra_type(title=pretty_title, file=os.path.join(os.path.dirname(file_path), video))
     artist_extras[video] = track_video
 
-    if extra_type == MusicVideoObject:
+    if extra_type in [MusicVideoObject, LyricMusicVideoObject]:
       Log('Found video %s for track: %s from file: %s' % (pretty_title, file_name, os.path.join(os.path.dirname(file_path), video)))
-      return track_video
+      track_videos.append(track_video)
     else:
       Log('Skipping track video %s (only regular music videos allowed on tracks)' % video)
+
+    if len(track_videos) > 0:
+      track_videos = sorted(track_videos, key = lambda v: (getExtraSortOrder()[type(v)], v.title))
+      return track_videos[0]
 
   return None
 
@@ -338,3 +343,6 @@ def getExtraTypeMap():
           'lyrics' : LyricMusicVideoObject,
           'behindthescenes' : BehindTheScenesObject,
           'interview' : InterviewObject }
+
+def getExtraSortOrder():
+  return {MusicVideoObject : 0, LyricMusicVideoObject : 1, LiveMusicVideoObject : 2, BehindTheScenesObject : 3, InterviewObject : 4}
