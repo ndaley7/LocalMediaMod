@@ -297,11 +297,11 @@ def findTrackExtra(file_path, extra_type_map, artist_extras={}):
     else:
       Log('Skipping track video %s (only regular music videos allowed on tracks)' % video)
 
-    if len(track_videos) > 0:
-      track_videos = sorted(track_videos, key = lambda v: (getExtraSortOrder()[type(v)], v.title))
-      return track_videos[0]
-
-  return None
+  if len(track_videos) > 0:
+    track_videos = sorted(track_videos, key = lambda v: (getExtraSortOrder()[type(v)], v.title))
+    return track_videos[0]
+  else:
+    return None
 
 
 def findArtistExtras(path, extra_type_map, artist_extras):
