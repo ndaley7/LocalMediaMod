@@ -171,7 +171,7 @@ class localMediaArtistCommon(object):
 
       # Now go through this artist's directories looking for additional extras.
       for artist_file_dir in set(artist_file_dirs):
-        findArtistExtras(helpers.unicodize(artist_file_dir), extra_type_map, artist_extras)
+        findArtistExtras(helpers.unicodize(artist_file_dir), extra_type_map, artist_extras, metadata.title)
 
       for extra in sorted(artist_extras.values(), key = lambda v: (getExtraSortOrder()[type(v)], v.title)):
         metadata.extras.add(extra)
@@ -304,24 +304,79 @@ def findTrackExtra(file_path, extra_type_map, artist_extras={}):
     return None
 
 
-def findArtistExtras(path, extra_type_map, artist_extras):
+def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
 
   # Look for other videos in this directory.
   for video in [f for f in os.listdir(path) 
                 if os.path.splitext(f)[1][1:].lower() in config.VIDEO_EXTS
                 and f not in artist_extras]:
 
-    video_file, ext = os.path.splitext(video)
-    name_components = video_file.split('-')
-
-    if len(name_components) > 1 and name_components[-1].lower().strip() in extra_type_map:
-      extra_type = extra_type_map[name_components.pop(-1).lower().strip()]
-    else:
-      extra_type = MusicVideoObject
-
-    Log('Found artist video: %s' % video)
     if video not in artist_extras:
-      artist_extras[video] = extra_type(title='-'.join(name_components), file=os.path.join(path,video))
+      Log('Found artist video: %s' % video)
+      artist_extras[video] = parseArtistExtra(video, extra_type_map, artist_name)
+
+  # Look for artist videos in the custom path if present.
+  artist_name = normalizeArtist(artist_name)
+  music_video_path = Prefs['music_video_path']
+  if len(music_video_path) > 0:
+    if not os.path.exists(music_video_path):
+      Log('The specified local music video path doesn\'t exist: %s' % music_video_path)
+      return
+    else:
+      local_files = [f for f in os.listdir(music_video_path) 
+                     if (os.path.splitext(f)[1][1:].lower() in config.VIDEO_EXTS or os.path.isdir(os.path.join(music_video_path, f)))
+                     and normalizeArtist(os.path.basename(f)).startswith(artist_name)
+                     and f not in artist_extras]
+      for local_file in local_files:
+
+        # Go ahead and add files directly in the specific path matching the "artist - title - type (optional).ext" convention.
+        if os.path.isfile(os.path.join(music_video_path, local_file)) and local_file not in artist_extras:
+          Log('Found artist video: %s' % local_file)
+          artist_extras[local_file] = parseArtistExtra(os.path.join(music_video_path, local_file), extra_type_map, artist_name)
+
+        # Also add all the videos in the "local video root/artist" directory if we found one.
+        elif os.path.isdir(os.path.join(music_video_path, local_file)) and normalizeArtist(os.path.basename(local_file)) == artist_name:
+          for artist_dir_file in [f for f in os.listdir(os.path.join(music_video_path, local_file))
+                                  if os.path.splitext(f)[1][1:].lower() in config.VIDEO_EXTS
+                                  and f not in artist_extras]:
+            if artist_dir_file not in artist_extras:
+              Log('Found artist video: %s' % artist_dir_file)
+              artist_extras[artist_dir_file] = parseArtistExtra(os.path.join(music_video_path, artist_dir_file), extra_type_map, artist_name)
+
+
+def parseArtistExtra(path, extra_type_map, artist_name):
+    
+  video_file, ext = os.path.splitext(os.path.basename(path))
+  name_components = video_file.split('-')
+
+  # Set the type and whack the type component from the name if we found one. 
+  if len(name_components) > 1 and name_components[-1].lower().strip() in extra_type_map:
+    extra_type = extra_type_map[name_components.pop(-1).lower().strip()]
+  else:
+    extra_type = MusicVideoObject
+
+  # Whack the artist name if it's the first component and we have more than one.
+  if len(name_components) > 1 and normalizeArtist(name_components[0]) == artist_name:
+    name_components.pop(0)
+
+  return extra_type(title='-'.join(name_components), file=path)
+
+
+def normalizeArtist(artist_name):
+  try:
+    u_artist_name = helpers.unicodize(artist_name)
+    ret = ''
+    for i in range(len(u_artist_name)):
+      if not unicodedata.category(u_artist_name[i]).startswith('P'):
+        ret += u_artist_name[i]
+    ret = ret.replace(' ', '').lower()
+    if len(ret) > 0:
+      return ret
+    else:
+      return artist_name
+  except Exception, e:
+    Log('Error normalizing artist: %s' % e)
+    return artist_name
 
 
 def shouldFindExtras():
