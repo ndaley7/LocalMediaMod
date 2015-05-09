@@ -318,7 +318,7 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
   # Look for artist videos in the custom path if present.
   artist_name = normalizeArtist(artist_name)
   music_video_path = Prefs['music_video_path']
-  if len(music_video_path) > 0:
+  if music_video_path is not None and len(music_video_path) > 0:
     if not os.path.exists(music_video_path):
       Log('The specified local music video path doesn\'t exist: %s' % music_video_path)
       return
