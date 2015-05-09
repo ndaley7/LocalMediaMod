@@ -4,7 +4,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-import zlib
+import zlib, hashlib
 from warnings import warn
 from struct import unpack
 
@@ -1078,7 +1078,7 @@ class APIC(Frame):
 
     @property
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+        return '%s:%s:%s' % (self.FrameID, self.desc, hashlib.md5(self.data).hexdigest())
 
     def _pprint(self):
         return "%s (%s, %d bytes)" % (
