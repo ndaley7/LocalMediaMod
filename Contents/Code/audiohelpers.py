@@ -22,6 +22,16 @@ def AudioHelpers(filename):
         return cls(filename)
   return None
 
+
+def parse_genres(genre):
+  if genre.find(';') != -1:
+    genre_list = genre.split(';')
+  else:
+    genre_list = genre.split('/')
+    
+  return genre_list
+
+
 #####################################################################################################################
 
 class ID3AudioHelper(AudioHelper):
@@ -33,7 +43,7 @@ class ID3AudioHelper(AudioHelper):
     
     Log('Reading ID3 tags from: ' + self.filename)
     try:
-      tags = MFile(self.filename)
+      self.tags = tags = MFile(self.filename)
       Log('Found tags: ' + str(tags.keys()))
     except: 
       Log('An error occurred while attempting to read ID3 tags from ' + self.filename)
@@ -53,12 +63,7 @@ class ID3AudioHelper(AudioHelper):
       if genres is not None and len(genres.text) > 0:
         metadata.genres.clear()
         for genre in genres.text:
-          if genre.find(';') != -1:
-            genre_list = genre.split(';')
-          else:
-            genre_list = genre.split('/')
-          
-          for sub_genre in genre_list:
+          for sub_genre in parse_genres(genre):
             metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading TCON (genre): ' + str(e))
@@ -106,7 +111,7 @@ class MP4AudioHelper(AudioHelper):
       if genres is not None and len(genres) > 0:
         metadata.genres.clear()
         for genre in genres:
-          for sub_genre in genre.split('/'):
+          for sub_genre in parse_genres(genre):
             metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading \xa9gen (genre): ' + str(e))
@@ -158,7 +163,7 @@ class FLACAudioHelper(AudioHelper):
       if genres is not None and len(genres) > 0:
         metadata.genres.clear()
         for genre in genres:
-          for sub_genre in genre.split('/'):
+          for sub_genre in parse_genres(genre):
             metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading genre: ' + str(e))
@@ -210,7 +215,7 @@ class OGGAudioHelper(AudioHelper):
       if genres is not None and len(genres) > 0:
         metadata.genres.clear()
         for genre in genres:
-          for sub_genre in genre.split('/'):
+          for sub_genre in parse_genres(genre):
             metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading genre: ' + str(e))
