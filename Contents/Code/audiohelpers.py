@@ -53,7 +53,12 @@ class ID3AudioHelper(AudioHelper):
       if genres is not None and len(genres.text) > 0:
         metadata.genres.clear()
         for genre in genres.text:
-          for sub_genre in genre.split('/'):
+          if genre.find(';') != -1:
+            genre_list = genre.split(';')
+          else:
+            genre_list = genre.split('/')
+          
+          for sub_genre in genre_list:
             metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading TCON (genre): ' + str(e))
