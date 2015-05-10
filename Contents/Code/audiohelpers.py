@@ -39,6 +39,25 @@ class ID3AudioHelper(AudioHelper):
   def is_helper_for(cls, tagType):
     return tagType in ('EasyID3', 'EasyMP3', 'EasyTrueAudio', 'ID3', 'MP3', 'TrueAudio', 'AIFF') # All of these file types use ID3 tags like MP3
 
+  def get_album_sort_title(self):
+    return self.tags.get('TSOA')
+    
+  def get_track_sort_title(self):
+    return self.tags.get('TSOT')
+    
+  def get_artist_sort_title(self):
+    try:
+      self.tags = tags = MFile(self.filename)
+      tag = self.tags.get('TSO2')
+      if tag:
+        return tag
+    
+      return self.tags.get('TSOP')
+    except:
+      pass
+      
+    return None
+
   def process_metadata(self, metadata):
     
     Log('Reading ID3 tags from: ' + self.filename)

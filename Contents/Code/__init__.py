@@ -163,11 +163,22 @@ class localMediaArtistCommon(object):
       artist_extras = {}
 
       # First look for track extras.
+      checked_tag = False
+      
       for album in media.children:
         for track in album.children:
           part = helpers.unicodize(track.items[0].parts[0].file)
           findTrackExtra(part, extra_type_map, artist_extras)
           artist_file_dirs.append(os.path.dirname(part))
+          
+          # Look for artist sort field.
+          if checked_tag == False:
+            checked_tag = True
+            audio_helper = audiohelpers.AudioHelpers(part)
+            if audio_helper and hasattr(audio_helper, 'get_artist_sort_title'):
+              artist_sort_title = audio_helper.get_artist_sort_title()
+              if artist_sort_title and hasattr(metadata, 'title_sort'):
+                metadata.title_sort = artist_sort_title
 
       # Now go through this artist's directories looking for additional extras.
       for artist_file_dir in set(artist_file_dirs):
@@ -251,7 +262,20 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
         if audio_helper != None:
           try: 
             valid_posters = valid_posters + audio_helper.process_metadata(metadata)
-          except: pass
+            
+            # Album sort title.
+            if hasattr(audio_helper, 'get_album_sort_title'):
+              album_sort_title = audio_helper.get_album_sort_title()
+              if album_sort_title and hasattr(metadata, 'title_sort'):
+                metadata.title_sort = album_sort_title
+            
+            if hasattr(audio_helper, 'get_track_sort_title'):
+              track_sort_title = audio_helper.get_track_sort_title()
+              track_key = media.tracks[track].guid or track
+              if track_sort_title and hasattr(metadata.tracks[track_key], 'title_sort'):
+                metadata.tracks[track_key].title_sort = track_sort_title
+          except:
+            pass
 
         # Look for a video extra for this track.
         if find_extras:
