@@ -337,7 +337,7 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
 
     if video not in artist_extras:
       Log('Found artist video: %s' % video)
-      artist_extras[video] = parseArtistExtra(video, extra_type_map, artist_name)
+      artist_extras[video] = parseArtistExtra(os.path.join(path, video), extra_type_map, artist_name)
 
   # Look for artist videos in the custom path if present.
   artist_name = normalizeArtist(artist_name)
@@ -423,7 +423,8 @@ def getExtraTypeMap():
           'live' : LiveMusicVideoObject,
           'lyrics' : LyricMusicVideoObject,
           'behindthescenes' : BehindTheScenesObject,
-          'interview' : InterviewObject }
+          'interview' : InterviewObject,
+          'concert' : ConcertObject }
 
 def getExtraSortOrder():
-  return {MusicVideoObject : 0, LyricMusicVideoObject : 1, LiveMusicVideoObject : 2, BehindTheScenesObject : 3, InterviewObject : 4}
+  return {MusicVideoObject : 0, LyricMusicVideoObject : 1, ConcertObject : 2, LiveMusicVideoObject : 3, BehindTheScenesObject : 4, InterviewObject : 5}
