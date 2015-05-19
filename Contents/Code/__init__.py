@@ -337,7 +337,9 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
 
     if video not in artist_extras:
       Log('Found artist video: %s' % video)
-      artist_extras[video] = parseArtistExtra(os.path.join(path, video), extra_type_map, artist_name)
+      extra = parseArtistExtra(os.path.join(path, video), extra_type_map, artist_name)
+      if extra is not None:
+        artist_extras[video] = extra
 
   # Look for artist videos in the custom path if present.
   artist_name = normalizeArtist(artist_name)
@@ -356,7 +358,9 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
         # Go ahead and add files directly in the specific path matching the "artist - title - type (optional).ext" convention.
         if os.path.isfile(os.path.join(music_video_path, local_file)) and local_file not in artist_extras:
           Log('Found artist video: %s' % local_file)
-          artist_extras[local_file] = parseArtistExtra(os.path.join(music_video_path, local_file), extra_type_map, artist_name)
+          extra = parseArtistExtra(os.path.join(music_video_path, local_file), extra_type_map, artist_name)
+          if extra is not None:
+            artist_extras[video] = extra
 
         # Also add all the videos in the "local video root/artist" directory if we found one.
         elif os.path.isdir(os.path.join(music_video_path, local_file)) and normalizeArtist(os.path.basename(local_file)) == artist_name:
@@ -365,7 +369,9 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
                                   and f not in artist_extras]:
             if artist_dir_file not in artist_extras:
               Log('Found artist video: %s' % artist_dir_file)
-              artist_extras[artist_dir_file] = parseArtistExtra(os.path.join(music_video_path, artist_dir_file), extra_type_map, artist_name)
+              extra = parseArtistExtra(os.path.join(music_video_path, artist_dir_file), extra_type_map, artist_name)
+              if extra is not None:
+                artist_extras[video] = extra      
 
 
 def parseArtistExtra(path, extra_type_map, artist_name):
@@ -378,6 +384,11 @@ def parseArtistExtra(path, extra_type_map, artist_name):
     extra_type = extra_type_map[name_components.pop(-1).lower().strip()]
   else:
     extra_type = MusicVideoObject
+
+  # Only return concerts if we're new enough.
+  if extra_type in [ConcertObject] and not Util.VersionAtLeast(Platform.ServerVersion, 0,9,12,2):
+    Log('Found concert, but skipping, not new enough server.')
+    return None
 
   # Whack the artist name if it's the first component and we have more than one.
   if len(name_components) > 1 and normalizeArtist(name_components[0]) == artist_name:
@@ -406,14 +417,14 @@ def normalizeArtist(artist_name):
 def shouldFindExtras():
   # Determine whether we should look for video extras.
     try: 
-      v = LiveMusicVideoObject()
-      if Util.VersionAtLeast(Platform.ServerVersion, 0,9,9,13):
+      v = ConcertObject()
+      if Util.VersionAtLeast(Platform.ServerVersion, 0,9,12,0):
         find_extras = True
       else:
         find_extras = False
-        Log('Not adding extras: Server v0.9.11.13+ required')  # TODO: Update with real min version.
+        Log('Not adding extras: Server v0.9.12.0+ required')
     except NameError, e:
-      Log('Not adding extras: Framework v2.5.2+ required')  # TODO: Update with real min version.
+      Log('Not adding extras: Framework v2.6.2+ required')
       find_extras = False
     return find_extras
 
