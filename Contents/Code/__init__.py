@@ -386,7 +386,7 @@ def parseArtistExtra(path, extra_type_map, artist_name):
     extra_type = MusicVideoObject
 
   # Only return concerts if we're new enough.
-  if extra_type in [ConcertObject] and not Util.VersionAtLeast(Platform.ServerVersion, 0,9,12,2):
+  if extra_type in [ConcertVideoObject] and not Util.VersionAtLeast(Platform.ServerVersion, 0,9,12,2):
     Log('Found concert, but skipping, not new enough server.')
     return None
 
@@ -417,7 +417,7 @@ def normalizeArtist(artist_name):
 def shouldFindExtras():
   # Determine whether we should look for video extras.
     try: 
-      v = ConcertObject()
+      v = ConcertVideoObject()
       if Util.VersionAtLeast(Platform.ServerVersion, 0,9,12,0):
         find_extras = True
       else:
@@ -435,7 +435,7 @@ def getExtraTypeMap():
           'lyrics' : LyricMusicVideoObject,
           'behindthescenes' : BehindTheScenesObject,
           'interview' : InterviewObject,
-          'concert' : ConcertObject }
+          'concert' : ConcertVideoObject }
 
 def getExtraSortOrder():
-  return {MusicVideoObject : 0, LyricMusicVideoObject : 1, ConcertObject : 2, LiveMusicVideoObject : 3, BehindTheScenesObject : 4, InterviewObject : 5}
+  return {MusicVideoObject : 0, LyricMusicVideoObject : 1, ConcertVideoObject : 2, LiveMusicVideoObject : 3, BehindTheScenesObject : 4, InterviewObject : 5}
