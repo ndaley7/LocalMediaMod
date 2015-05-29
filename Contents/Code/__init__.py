@@ -369,7 +369,7 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
                                   and f not in artist_extras]:
             if artist_dir_file not in artist_extras:
               Log('Found artist video: %s' % artist_dir_file)
-              extra = parseArtistExtra(os.path.join(music_video_path, artist_dir_file), extra_type_map, artist_name)
+              extra = parseArtistExtra(os.path.join(music_video_path, local_file, artist_dir_file), extra_type_map, artist_name)
               if extra is not None:
                 artist_extras[artist_dir_file] = extra      
 
