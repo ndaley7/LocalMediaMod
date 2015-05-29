@@ -182,7 +182,7 @@ class localMediaArtistCommon(object):
 
       # Now go through this artist's directories looking for additional extras.
       for artist_file_dir in set(artist_file_dirs):
-        findArtistExtras(helpers.unicodize(artist_file_dir), extra_type_map, artist_extras, metadata.title)
+        findArtistExtras(helpers.unicodize(artist_file_dir), extra_type_map, artist_extras, media.title)
 
       for extra in sorted(artist_extras.values(), key = lambda v: (getExtraSortOrder()[type(v)], v.title)):
         metadata.extras.add(extra)
@@ -360,7 +360,7 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
           Log('Found artist video: %s' % local_file)
           extra = parseArtistExtra(os.path.join(music_video_path, local_file), extra_type_map, artist_name)
           if extra is not None:
-            artist_extras[video] = extra
+            artist_extras[local_file] = extra
 
         # Also add all the videos in the "local video root/artist" directory if we found one.
         elif os.path.isdir(os.path.join(music_video_path, local_file)) and normalizeArtist(os.path.basename(local_file)) == artist_name:
@@ -371,7 +371,7 @@ def findArtistExtras(path, extra_type_map, artist_extras, artist_name):
               Log('Found artist video: %s' % artist_dir_file)
               extra = parseArtistExtra(os.path.join(music_video_path, artist_dir_file), extra_type_map, artist_name)
               if extra is not None:
-                artist_extras[video] = extra      
+                artist_extras[artist_dir_file] = extra      
 
 
 def parseArtistExtra(path, extra_type_map, artist_name):
@@ -394,7 +394,7 @@ def parseArtistExtra(path, extra_type_map, artist_name):
   if len(name_components) > 1 and normalizeArtist(name_components[0]) == artist_name:
     name_components.pop(0)
 
-  return extra_type(title='-'.join(name_components), file=path)
+  return extra_type(title='-'.join(name_components), file=helpers.unicodize(path))
 
 
 def normalizeArtist(artist_name):
