@@ -38,8 +38,9 @@ class localMediaMovie(Agent.Movies):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
     
   def update(self, metadata, media, lang):
-    # Set title if needed.
-    if media and metadata.title is None: metadata.title = media.title
+
+    # Clear out the title to ensure stale data doesn't clobber other agents' contributions.
+    metadata.title = None
 
     part = media.items[0].parts[0]
     path = os.path.dirname(part.file)
@@ -87,8 +88,9 @@ class localMediaTV(Agent.TV_Shows):
     results.Append(MetadataSearchResult(id = 'null', score = 100))
 
   def update(self, metadata, media, lang):
-    # Set title if needed.
-    if media and metadata.title is None: metadata.title = media.title
+
+    # Clear out the title to ensure stale data doesn't clobber other agents' contributions.
+    metadata.title = None
 
     # Look for media, collect directories.
     dirs = {}
@@ -153,8 +155,8 @@ class localMediaArtistCommon(object):
 
   def update(self, metadata, media, lang):
     
-    # Set title if needed.
-    if media and metadata.title is None: metadata.title = media.title
+    # Clear out the title to ensure stale data doesn't clobber other agents' contributions.
+    metadata.title = None
    
     if shouldFindExtras():
       extra_type_map = getExtraTypeMap()
@@ -225,8 +227,8 @@ class localMediaAlbum(Agent.Album):
 
 def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extra_type_map=None):
       
-  # Set title if needed.
-  if media and metadata.title is None: metadata.title = media.title
+  # Clear out the title to ensure stale data doesn't clobber other agents' contributions.
+  metadata.title = None
 
   valid_posters = []
   path = None
