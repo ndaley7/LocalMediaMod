@@ -46,7 +46,7 @@ class localMediaMovie(Agent.Movies):
     path = os.path.dirname(part.file)
     
     # Look for local media.
-    try: localmedia.findAssets(metadata, [path], 'movie', media.items[0].parts)
+    try: localmedia.findAssets(metadata, media.title, [path], 'movie', media.items[0].parts)
     except Exception, e: 
       Log('Error finding media for movie %s: %s' % (media.title, str(e)))
 

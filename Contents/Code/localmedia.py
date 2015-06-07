@@ -5,7 +5,7 @@ import subtitlehelpers
 
 #####################################################################################################################
 
-def findAssets(metadata, paths, type, parts=[]):
+def findAssets(metadata, media_title, paths, type, parts=[]):
 
   ignore_samples = ['[-\._ ]sample', 'sample[-\._ ]']
   ignore_trailers = ['-trailer\.']
@@ -149,8 +149,8 @@ def findAssets(metadata, paths, type, parts=[]):
 
           # Files named exactly 'trailer' or starting with 'movie-trailer'.
           if (fn == 'trailer' or fn.startswith('movie-trailer')) and not fn.startswith('.') and ext[1:] in config.VIDEO_EXTS:
-            Log('Found trailer extra, renaming with title: ' + metadata.title)
-            extras.append({'type' : key, 'title' : metadata.title, 'file' : os.path.join(path, f)})
+            Log('Found trailer extra, renaming with title: ' + media_title)
+            extras.append({'type' : key, 'title' : media_title, 'file' : os.path.join(path, f)})
 
           # Files following the "-extra" convention.
           else:
@@ -170,7 +170,7 @@ def findAssets(metadata, paths, type, parts=[]):
 
         Log('Added %d extras' % len(metadata.extras))
 
-  Log('Looking for %s media (%s) in %d paths (root file: %s) with %d media files.', type, metadata.title, len(paths), root_file, total_media_files)
+  Log('Looking for %s media (%s) in %d paths (root file: %s) with %d media files.', type, media_title, len(paths), root_file, total_media_files)
   Log('Paths: %s', ", ".join([ helpers.unicodize(p) for p in paths ]))
 
   # Figure out what regexs to use.
