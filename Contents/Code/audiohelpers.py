@@ -114,6 +114,27 @@ class MP4AudioHelper(AudioHelper):
   def is_helper_for(cls, tagType):
     return tagType in ['MP4','EasyMP4']
 
+  def get_track_sort_title(self):
+    try:
+      tags = MFile(self.filename, easy=True)
+      return tags.get('titlesort')[0]  # 'sonm'
+    except:      
+      return None
+
+  def get_album_sort_title(self):
+    try:
+      tags = MFile(self.filename, easy=True)
+      return tags.get('albumsort')[0]  # 'soal'
+    except:      
+      return None
+        
+  def get_artist_sort_title(self):
+    try:
+      tags = MFile(self.filename, easy=True)
+      return tags.get('artistsort')[0]  # 'soar'
+    except:      
+      return None
+
   def process_metadata(self, metadata):
 
     Log('Reading MP4 tags from: ' + self.filename)
