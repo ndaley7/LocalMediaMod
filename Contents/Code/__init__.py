@@ -285,7 +285,8 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
           if track_video is not None:
             track_key = media.tracks[track].guid or track
             metadata.tracks[track_key].extras.add(track_video)
-
+            
+  metadata.posters.validate_keys(valid_posters)
       
 def findTrackExtra(file_path, extra_type_map, artist_extras={}):
 
