@@ -44,7 +44,20 @@ class ID3AudioHelper(AudioHelper):
     
   def get_track_sort_title(self):
     return self.tags.get('TSOT')
-    
+
+  def get_track_genres(self):
+    genre_list = []
+    try:
+      self.tags = tags = MFile(self.filename)
+      genres = self.tags.get('TCON')
+      if genres is not None and len(genres.text) > 0:
+        for genre in genres.text:
+          for sub_genre in parse_genres(genre):
+            genre_list.append(sub_genre.strip())
+    except Exception, e:
+      Log('Exception reading TCON (genre): ' + str(e))
+    return genre_list
+
   def get_artist_sort_title(self):
     try:
       self.tags = tags = MFile(self.filename)
@@ -137,6 +150,20 @@ class MP4AudioHelper(AudioHelper):
       return tags.get('artistsort')[0]  # 'soar'
     except:      
       return None
+
+  def get_track_genres(self):
+    genre_list = []
+    try:
+      tags = MFile(self.filename)
+      genres = tags.get('\xa9gen')
+      if genres is not None and len(genres) > 0:
+        for genre in genres:
+          for sub_genre in parse_genres(genre):
+            genre_list.append(sub_genre.strip())
+    except Exception, e:
+      Log('Exception reading (genre): ' + str(e))
+    return genre_list
+
 
   def process_metadata(self, metadata):
 

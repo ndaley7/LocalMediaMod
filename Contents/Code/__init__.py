@@ -15,6 +15,8 @@ from mutagen.oggvorbis import OggVorbis
 
 PERSONAL_MEDIA_IDENTIFIER = "com.plexapp.agents.none"
 
+GENERIC_ARTIST_NAMES = ['various artists', '[unknown artist]', 'soundtrack', 'ost', 'original sound track', 'original soundtrack', 'original broadway cast']
+
 #####################################################################################################################
 
 @expose
@@ -157,30 +159,45 @@ class localMediaArtistCommon(object):
     
     # Clear out the title to ensure stale data doesn't clobber other agents' contributions.
     metadata.title = None
-   
     if shouldFindExtras():
       extra_type_map = getExtraTypeMap()
 
       artist_file_dirs = []
       artist_extras = {}
 
+      metadata.genres.clear()
+      album_genres = []
       # First look for track extras.
       checked_tag = False
-      
       for album in media.children:
+        checked_album_genre = False
         for track in album.children:
           part = helpers.unicodize(track.items[0].parts[0].file)
           findTrackExtra(part, extra_type_map, artist_extras)
           artist_file_dirs.append(os.path.dirname(part))
           
-          # Look for artist sort field.
+          audio_helper = audiohelpers.AudioHelpers(part)
+          if media.title.lower() not in GENERIC_ARTIST_NAMES:
+            # Get the genre from the first track of every album
+            if checked_album_genre == False:
+              checked_album_genre = True
+              if audio_helper and hasattr(audio_helper, 'get_track_genres'):
+                genres = audio_helper.get_track_genres()
+                for genre in genres:
+                  if genre not in album_genres:
+                    album_genres.append(genre)
+
+          # Look for artist sort field from first track.
+          # TODO maybe analyse all tracks and only add title_sort if they are the same.
           if checked_tag == False:
             checked_tag = True
-            audio_helper = audiohelpers.AudioHelpers(part)
             if audio_helper and hasattr(audio_helper, 'get_artist_sort_title'):
               artist_sort_title = audio_helper.get_artist_sort_title()
               if artist_sort_title and hasattr(metadata, 'title_sort'):
                 metadata.title_sort = artist_sort_title
+
+      for genre in album_genres:
+        metadata.genres.add(genre)
 
       # Now go through this artist's directories looking for additional extras.
       for artist_file_dir in set(artist_file_dirs):
