@@ -131,6 +131,9 @@ class MP4AudioHelper(AudioHelper):
   def get_artist_sort_title(self):
     try:
       tags = MFile(self.filename, easy=True)
+      tag = tags.get('albumartistsort')  # 'soaa'
+      if tag:
+        return tag[0]
       return tags.get('artistsort')[0]  # 'soar'
     except:      
       return None
