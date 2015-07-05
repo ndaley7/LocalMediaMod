@@ -199,9 +199,41 @@ class localMediaArtistCommon(object):
       for genre in album_genres:
         metadata.genres.add(genre)
 
-      # Now go through this artist's directories looking for additional extras.
+      # Now go through this artist's directories looking for additional extras and local art.
+      checked_artist_path = False
       for artist_file_dir in set(artist_file_dirs):
-        findArtistExtras(helpers.unicodize(artist_file_dir), extra_type_map, artist_extras, media.title)
+        path = helpers.unicodize(artist_file_dir)
+        findArtistExtras(path, extra_type_map, artist_extras, media.title)
+
+        # if name of parent dir is same as artist name, look for art there
+        parentdir = os.path.split(os.path.abspath(path[:-1]))[0]
+        name_parentdir = os.path.basename(parentdir)
+        if normalizeArtist(name_parentdir) == normalizeArtist(media.title) and checked_artist_path is False:
+          checked_artist_path = True
+          path_files = {}
+          for p in os.listdir(parentdir):
+            path_files[p.lower()] = p
+
+          # Look for posters and art
+          valid_posters = []
+          valid_art = []
+          for ext in config.ART_EXTS:
+            for name in config.POSTER_FILES:
+              file = (name + '.' + ext).lower()
+              if file in path_files.keys():
+                data = Core.storage.load(os.path.join(parentdir, path_files[file]))
+                poster_name = hashlib.md5(data).hexdigest()
+                valid_posters.append(poster_name)
+                if poster_name not in metadata.posters:
+                  metadata.posters[poster_name] = Proxy.Media(data)
+            for name in config.ART_FILES:
+              file = (name + '.' + ext).lower()
+              if file in path_files.keys():
+                data = Core.storage.load(os.path.join(parentdir, path_files[file]))
+                art_name = hashlib.md5(data).hexdigest()
+                valid_art.append(art_name)
+                if art_name not in metadata.art:
+                  metadata.art[art_name] = Proxy.Media(data)
 
       for extra in sorted(artist_extras.values(), key = lambda v: (getExtraSortOrder()[type(v)], v.title)):
         metadata.extras.add(extra)
