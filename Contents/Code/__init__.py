@@ -304,9 +304,19 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
 
               if poster_name not in metadata.posters:
                 metadata.posters[poster_name] = Proxy.Media(data)
-                Log('Local asset image added: ' + file + ', for file: ' + filename)
+                Log('Local asset image added (poster): ' + file + ', for file: ' + filename)
               else:
                 Log('Skipping local poster since its already added')
+          for name in config.ART_FILES:
+            file = (name + '.' + ext).lower()
+            if file in path_files.keys():
+              data = Core.storage.load(os.path.join(path, path_files[file]))
+              art_name = hashlib.md5(data).hexdigest()
+              if art_name not in metadata.art:
+                metadata.art[art_name] = Proxy.Media(data)
+                Log('Local asset image added (art): ' + file + ', for file: ' + filename)
+              else:
+                Log('Skipping local art since its already added')
 
         # If there is an appropriate AudioHelper, use it.
         audio_helper = audiohelpers.AudioHelpers(part.file)
