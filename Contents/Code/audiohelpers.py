@@ -85,7 +85,12 @@ class ID3AudioHelper(AudioHelper):
     try:
       year = tags.get('TDRC')
       if year is not None and len(year.text) > 0:
-        metadata.originally_available_at = Datetime.ParseDate('01-01-' + str(year.text[0])).date()
+        available = Datetime.ParseDate('01-01-' + str(year.text[0])).date()
+        if metadata.originally_available_at is None:
+          metadata.originally_available_at = available
+        elif (available > metadata.originally_available_at):
+          # more then one date: use highest one
+          metadata.originally_available_at = available
     except Exception, e:
       Log('Exception reading TDRC (year): ' + str(e))
 
@@ -190,7 +195,12 @@ class MP4AudioHelper(AudioHelper):
     try:
       release_date = tags.get('\xa9day')
       if release_date is not None and len(release_date) > 0:
-        metadata.originally_available_at = Datetime.ParseDate(release_date[0].split('T')[0])
+        available = Datetime.ParseDate(release_date[0].split('T')[0]).date()
+        if metadata.originally_available_at is None:
+          metadata.originally_available_at = available
+        elif (available > metadata.originally_available_at):
+          # more then one date: use highest one
+          metadata.originally_available_at = available
     except Exception, e:
       Log('Exception reading \xa9day (release date)' + str(e))
 
