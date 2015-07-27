@@ -81,7 +81,7 @@ class ID3AudioHelper(AudioHelper):
       Log('An error occurred while attempting to read ID3 tags from ' + self.filename)
       return
 
-    # Release Date
+    # Release Date (original_available_at)
     try:
       year = tags.get('TDRC')
       if year is not None and len(year.text) > 0:
@@ -93,6 +93,19 @@ class ID3AudioHelper(AudioHelper):
           metadata.originally_available_at = available
     except Exception, e:
       Log('Exception reading TDRC (year): ' + str(e))
+
+    # Release Date (available_at)
+    try:
+      year = tags.get('TDRL')
+      if year is not None and len(year.text) > 0:
+        available = Datetime.ParseDate('01-01-' + str(year.text[0])).date()
+        if metadata.available_at is None:
+          metadata.available_at = available
+        elif (available > metadata.available_at):
+          # more then one date: use highest one
+          metadata.available_at = available
+    except Exception, e:
+      Log('Exception reading TDRL (year): ' + str(e))
 
     # Genres
     try:
@@ -114,7 +127,6 @@ class ID3AudioHelper(AudioHelper):
         elif tags[frame].mime == 'image/png': ext = 'png'
         elif tags[frame].mime == 'image/gif': ext = 'gif'
         else: ext = ''
-
         poster_name = hashlib.md5(tags[frame].data).hexdigest()
         valid_posters.append(poster_name)
         if poster_name not in metadata.posters:
