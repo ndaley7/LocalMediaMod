@@ -111,10 +111,10 @@ class ID3AudioHelper(AudioHelper):
     try:
       genres = tags.get('TCON')
       if genres is not None and len(genres.text) > 0:
-        metadata.genres.clear()
         for genre in genres.text:
           for sub_genre in parse_genres(genre):
-            metadata.genres.add(sub_genre.strip())
+            if sub_genre.strip() not in metadata.genres:
+              metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading TCON (genre): ' + str(e))
 
@@ -196,10 +196,10 @@ class MP4AudioHelper(AudioHelper):
     try:
       genres = tags.get('\xa9gen')
       if genres is not None and len(genres) > 0:
-        metadata.genres.clear()
         for genre in genres:
           for sub_genre in parse_genres(genre):
-            metadata.genres.add(sub_genre.strip())
+            if sub_genre.strip() not in metadata.genres:
+              metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading \xa9gen (genre): ' + str(e))
 

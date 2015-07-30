@@ -170,7 +170,6 @@ class localMediaArtistCommon(object):
       # First look for track extras.
       checked_tag = False
       for album in media.children:
-        checked_album_genre = False
         for track in album.children:
           part = helpers.unicodize(track.items[0].parts[0].file)
           findTrackExtra(part, extra_type_map, artist_extras)
@@ -178,14 +177,11 @@ class localMediaArtistCommon(object):
           
           audio_helper = audiohelpers.AudioHelpers(part)
           if media.title.lower() not in GENERIC_ARTIST_NAMES:
-            # Get the genre from the first track of every album
-            if checked_album_genre == False:
-              checked_album_genre = True
-              if audio_helper and hasattr(audio_helper, 'get_track_genres'):
-                genres = audio_helper.get_track_genres()
-                for genre in genres:
-                  if genre not in album_genres:
-                    album_genres.append(genre)
+            if audio_helper and hasattr(audio_helper, 'get_track_genres'):
+              genres = audio_helper.get_track_genres()
+              for genre in genres:
+                if genre not in album_genres:
+                  album_genres.append(genre)
 
           # Look for artist sort field from first track.
           # TODO maybe analyse all tracks and only add title_sort if they are the same.
@@ -278,6 +274,9 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
       
   # Clear out the title to ensure stale data doesn't clobber other agents' contributions.
   metadata.title = None
+
+  # clear out genres for this album so we will get genres for all tracks in audio_helper.process_metadata(metadata)
+  metadata.genres.clear()
 
   valid_posters = []
   path = None
