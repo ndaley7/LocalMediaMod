@@ -5,6 +5,7 @@ import helpers
 import localmedia
 import audiohelpers
 import videohelpers
+from collections import defaultdict
 
 from mutagen import File
 from mutagen.mp4 import MP4
@@ -279,7 +280,9 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
   metadata.genres.clear()
 
   valid_posters = []
+  valid_keys = defaultdict(list)
   path = None
+
   for track in media.tracks:
     for item in media.tracks[track].items:
       for part in item.parts:
@@ -343,6 +346,19 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
           if track_video is not None:
             track_key = media.tracks[track].guid or track
             metadata.tracks[track_key].extras.add(track_video)
+        
+        # Look for lyrics.
+        LYRIC_EXTS = ['txt', 'lrc']
+        track_key = media.tracks[track].guid or track
+        
+        for ext in LYRIC_EXTS:
+          file = (file_root + '.' + ext)
+          if os.path.exists(file):
+            metadata.tracks[track_key].lyrics[file] = Proxy.LocalFile(file, format=ext)
+            valid_keys[track_key].append(file)
+            
+  for key in valid_keys.keys():
+    metadata.tracks[key].lyrics.validate_keys(valid_keys[key])
             
   metadata.posters.validate_keys(valid_posters)
       
