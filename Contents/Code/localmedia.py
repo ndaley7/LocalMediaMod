@@ -29,7 +29,9 @@ def findAssets(metadata, media_title, paths, type, parts=[]):
                 'deleted' : DeletedSceneObject,
                 'behindthescenes' : BehindTheScenesObject,
                 'interview' : InterviewObject,
-                'scene' : SceneOrSampleObject}
+                'scene' : SceneOrSampleObject,
+                'featurette' : FeaturetteObject,
+                'short' : ShortObject}
 
   # We start by building a dictionary of files to their absolute paths. We also need to know
   # the number of media files that are actually present, in case the found local media asset 
@@ -161,7 +163,7 @@ def findAssets(metadata, media_title, paths, type, parts=[]):
                 extras.append({'type' : key, 'title' : helpers.unicodize(title), 'file' : os.path.join(path, f)})
     
         # Make sure extras are sorted alphabetically and by type.
-        type_order = ['trailer', 'behindthescenes', 'interview', 'deleted', 'scene', 'sample']
+        type_order = ['trailer', 'behindthescenes', 'interview', 'deleted', 'scene', 'sample', 'featurette', 'short']
         extras.sort(key=lambda e: e['title'])
         extras.sort(key=lambda e: type_order.index(e['type']))
 
