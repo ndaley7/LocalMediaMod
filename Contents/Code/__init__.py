@@ -231,6 +231,9 @@ class localMediaArtistCommon(object):
                 if art_name not in metadata.art:
                   metadata.art[art_name] = Proxy.Media(data)
 
+          metadata.art.validate_keys(valid_art)
+          metadata.posters.validate_keys(valid_posters)
+
       for extra in sorted(artist_extras.values(), key = lambda v: (getExtraSortOrder()[type(v)], v.title)):
         metadata.extras.add(extra)
 
@@ -279,6 +282,7 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
   metadata.genres.clear()
 
   valid_posters = []
+  valid_art = []
   path = None
   for track in media.tracks:
     for item in media.tracks[track].items:
@@ -311,6 +315,8 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
             if file in path_files.keys():
               data = Core.storage.load(os.path.join(path, path_files[file]))
               art_name = hashlib.md5(data).hexdigest()
+              valid_art.append(art_name)
+
               if art_name not in metadata.art:
                 metadata.art[art_name] = Proxy.Media(data)
                 Log('Local asset image added (art): ' + file + ', for file: ' + filename)
@@ -345,6 +351,7 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
             metadata.tracks[track_key].extras.add(track_video)
             
   metadata.posters.validate_keys(valid_posters)
+  metadata.art.validate_keys(valid_art)
       
 def findTrackExtra(file_path, extra_type_map, artist_extras={}):
 
