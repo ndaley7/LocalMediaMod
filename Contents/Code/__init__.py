@@ -201,35 +201,41 @@ class localMediaArtistCommon(object):
         path = helpers.unicodize(artist_file_dir)
         findArtistExtras(path, extra_type_map, artist_extras, media.title)
 
-        # if name of parent dir is same as artist name, look for art there
         parentdir = os.path.split(os.path.abspath(path[:-1]))[0]
         name_parentdir = os.path.basename(parentdir)
-        if normalizeArtist(name_parentdir) == normalizeArtist(media.title) and checked_artist_path is False:
+        artist_has_own_dir = False
+        path_to_use = path
+        if normalizeArtist(name_parentdir) == normalizeArtist(media.title):
+          artist_has_own_dir = True
+          path_to_use = parentdir
+
+        if checked_artist_path is False:
           checked_artist_path = True
           path_files = {}
-          for p in os.listdir(parentdir):
+          for p in os.listdir(path_to_use):
             path_files[p.lower()] = p
 
           # Look for posters and art
           valid_posters = []
           valid_art = []
-          for ext in config.ART_EXTS:
-            for name in config.POSTER_FILES:
-              file = (name + '.' + ext).lower()
-              if file in path_files.keys():
-                data = Core.storage.load(os.path.join(parentdir, path_files[file]))
-                poster_name = hashlib.md5(data).hexdigest()
-                valid_posters.append(poster_name)
-                if poster_name not in metadata.posters:
-                  metadata.posters[poster_name] = Proxy.Media(data)
-            for name in config.ART_FILES:
-              file = (name + '.' + ext).lower()
-              if file in path_files.keys():
-                data = Core.storage.load(os.path.join(parentdir, path_files[file]))
-                art_name = hashlib.md5(data).hexdigest()
-                valid_art.append(art_name)
-                if art_name not in metadata.art:
-                  metadata.art[art_name] = Proxy.Media(data)
+
+          valid_file_names = getValidFileNamesForArt(config.ARTIST_POSTER_FILES, config.ARTIST_PREFIX, artist_has_own_dir)
+          for file in valid_file_names:
+            if file in path_files.keys():
+              data = Core.storage.load(os.path.join(path_to_use, path_files[file]))
+              poster_name = hashlib.md5(data).hexdigest()
+              valid_posters.append(poster_name)
+              if poster_name not in metadata.posters:
+                metadata.posters[poster_name] = Proxy.Media(data)
+            
+          valid_file_names = getValidFileNamesForArt(config.ART_FILES, config.ARTIST_PREFIX, artist_has_own_dir)
+          for file in valid_file_names:   
+            if file in path_files.keys():
+              data = Core.storage.load(os.path.join(path_to_use, path_files[file]))
+              art_name = hashlib.md5(data).hexdigest()
+              valid_art.append(art_name)
+              if art_name not in metadata.art:
+                metadata.art[art_name] = Proxy.Media(data)
 
           metadata.art.validate_keys(valid_art)
           metadata.posters.validate_keys(valid_posters)
@@ -296,7 +302,7 @@ def updateAlbum(metadata, media, lang, find_extras=False, artist_extras={}, extr
           path_files[p.lower()] = p
 
         # Look for posters
-        poster_files = config.POSTER_FILES + [ os.path.basename(file_root), helpers.splitPath(path)[-1] ]
+        poster_files = config.ALBUM_POSTER_FILES + [ os.path.basename(file_root), helpers.splitPath(path)[-1] ]
         for ext in config.ART_EXTS:
           for name in poster_files:
             file = (name + '.' + ext).lower()
@@ -507,3 +513,18 @@ def getExtraTypeMap():
 
 def getExtraSortOrder():
   return {MusicVideoObject : 0, LyricMusicVideoObject : 1, ConcertVideoObject : 2, LiveMusicVideoObject : 3, BehindTheScenesObject : 4, InterviewObject : 5}
+
+
+def getValidFileNamesForArt(names, prefix, add_without_prefix):
+  # Return the valid file names for the art 
+  # given default names and the use of a prefix
+  valid_file_names = []
+  for ext in config.ART_EXTS:
+    for name in names:
+      file = (name + '.' + ext).lower()
+      if add_without_prefix or name == prefix:
+        valid_file_names.append(file)
+      file = prefix + '-' + file
+      if name != prefix:
+        valid_file_names.append(file)
+  return valid_file_names
