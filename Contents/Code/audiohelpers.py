@@ -53,7 +53,8 @@ class ID3AudioHelper(AudioHelper):
       if genres is not None and len(genres.text) > 0:
         for genre in genres.text:
           for sub_genre in parse_genres(genre):
-            genre_list.append(sub_genre.strip())
+            if sub_genre.strip():
+              genre_list.append(sub_genre.strip())
     except Exception, e:
       Log('Exception reading TCON (genre): ' + str(e))
     return genre_list
@@ -113,8 +114,10 @@ class ID3AudioHelper(AudioHelper):
       if genres is not None and len(genres.text) > 0:
         for genre in genres.text:
           for sub_genre in parse_genres(genre):
-            if sub_genre.strip() not in metadata.genres:
-              metadata.genres.add(sub_genre.strip())
+            sub_genre_stripped = sub_genre.strip()
+            if sub_genre_stripped:
+              if sub_genre_stripped not in metadata.genres:
+                metadata.genres.add(sub_genre_stripped)
     except Exception, e:
       Log('Exception reading TCON (genre): ' + str(e))
 
@@ -176,7 +179,8 @@ class MP4AudioHelper(AudioHelper):
       if genres is not None and len(genres) > 0:
         for genre in genres:
           for sub_genre in parse_genres(genre):
-            genre_list.append(sub_genre.strip())
+            if sub_genre.strip():
+              genre_list.append(sub_genre.strip())
     except Exception, e:
       Log('Exception reading (genre): ' + str(e))
     return genre_list
@@ -198,8 +202,10 @@ class MP4AudioHelper(AudioHelper):
       if genres is not None and len(genres) > 0:
         for genre in genres:
           for sub_genre in parse_genres(genre):
-            if sub_genre.strip() not in metadata.genres:
-              metadata.genres.add(sub_genre.strip())
+            sub_genre_stripped = sub_genre.strip()
+            if sub_genre_stripped:
+              if sub_genre_stripped not in metadata.genres:
+                metadata.genres.add(sub_genre_stripped)
     except Exception, e:
       Log('Exception reading \xa9gen (genre): ' + str(e))
 
@@ -256,7 +262,8 @@ class FLACAudioHelper(AudioHelper):
         metadata.genres.clear()
         for genre in genres:
           for sub_genre in parse_genres(genre):
-            metadata.genres.add(sub_genre.strip())
+            if sub_genre.strip():
+              metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading genre: ' + str(e))
 
@@ -308,7 +315,8 @@ class OGGAudioHelper(AudioHelper):
         metadata.genres.clear()
         for genre in genres:
           for sub_genre in parse_genres(genre):
-            metadata.genres.add(sub_genre.strip())
+            if sub_genre.strip():
+              metadata.genres.add(sub_genre.strip())
     except Exception, e:
       Log('Exception reading genre: ' + str(e))
 
