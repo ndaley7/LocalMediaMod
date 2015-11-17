@@ -121,7 +121,7 @@ class MP4VideoHelper(VideoHelper):
         for director in pl['directors']:
           director_name = director['name']
           if director_name:
-            pl_directors.add(director_name)
+            pl_directors.append(director_name)
         # if there are none-empty director names present use them
         if pl_directors:
           item.directors.clear()
@@ -136,7 +136,7 @@ class MP4VideoHelper(VideoHelper):
         for writer in pl['screenwriters']:
           writer_name = writer['name']
           if writer_name:
-            pl_screenwriters.add(writer_name)
+            pl_screenwriters.append(writer_name)
         # if there are none-empty writer names present use them
         if pl_screenwriters:
           item.writers.clear()
@@ -151,7 +151,7 @@ class MP4VideoHelper(VideoHelper):
         for actor in pl['cast']:
           actor_name = actor['name']
           if actor_name:
-            pl_actors.add(actor_name)
+            pl_actors.append(actor_name)
 
       if pl_actors:
         item.roles.clear()
